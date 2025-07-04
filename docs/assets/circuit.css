@@ -1,0 +1,63 @@
+.Circuit {
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  text-align: center;
+}
+
+.circuit-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.circuit-image img {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.cad-designs {
+  background-color: #ffffff;
+  padding: 60px 20px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  text-align: center;
+}
+
+.cad-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.cad-container h2 {
+  font-size: 2.5rem;
+  color: #005f73;
+  margin-bottom: 40px;
+}
+
+.cad-images {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.cad-image-box {
+  flex: 1 1 400px;
+  max-width: 500px;
+}
+
+.cad-image-box img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease;
+}
+
+.cad-image-box img:hover {
+  transform: scale(1.03);
+}
+
+.cad-image-box p {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #444;
+}

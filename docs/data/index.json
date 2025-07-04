@@ -1,0 +1,31 @@
+{
+  "team": [
+    {
+      "name": "Tharindu Mapagedara",
+      "email": "e20248@eng.pdn.ac.lk",
+      "eNumber": "E/20/248"
+    },
+    {
+      "name": "Janith Rathuge",
+      "email": "e20453@eng.pdn.ac.lk",
+      "eNumber": "E/20/453"
+    },
+    {
+      "name": "Chamuditha Jananga",
+      "email": "e20158@eng.pdn.ac.lk",
+      "eNumber": "E/20/158"
+    },
+    {
+      "name": "Tharushika Prasadinie",
+      "email": "e20300@eng.pdn.ac.lk",
+      "eNumber": "E/20/300"
+    }
+  ],
+  "supervisors": [
+    {
+      "name": "Dr. Isuru Nawinne",
+      "email": "isurunawinne@eng.pdn.ac.lk"
+    }
+  ],
+  "tags": ["Embedded Systems","Web","Biomedical"]
+}

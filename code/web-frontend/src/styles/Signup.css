@@ -1,0 +1,170 @@
+body, html {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto; /* Allow vertical scrolling */
+}
+
+.auth-container {
+  max-width: 800px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.signup-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+
+}
+.logo-container {
+  text-align: center;
+  margin-bottom: 15px;
+}
+
+.vescueye-logo {
+  width: 100px;
+  height: auto;
+}
+
+
+.signup-title {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 24px;
+  color: #333;
+}
+
+.tabs {
+  width: 100%;
+}
+
+.tab-list {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 20px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 12px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s;
+  color: #888;
+}
+
+.tab-button:hover {
+  color: #555;
+}
+
+.tab-button.active {
+  color: #2c6ecf;
+  border-bottom: 2px solid #2c6ecf;
+  font-weight: 600;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.form-row {
+  display: flex;
+  gap: 15px;
+}
+
+.form-row input, 
+.form-row select {
+  flex: 1;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-field label {
+  font-size: 14px;
+  color: #666;
+}
+
+input, textarea, select {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  width: 100%;
+}
+
+textarea {
+  min-height: 80px;
+}
+
+.title-select {
+  max-width: 100px;
+}
+
+.success-message {
+  background-color: #e7f7ed;
+  color: #2e7d32;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.error-message {
+  background-color: #fdeded;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 4px;
+  margin: 15px 0;
+}
+
+.signup-button {
+  background-color: #2c6ecf;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: background-color 0.3s;
+}
+
+.signup-button:hover {
+  background-color: #1a5cb5;
+}
+
+.signin-link {
+  text-align: center;
+  margin-top: 20px;
+  color: #666;
+}
+
+.signin-link a {
+  color: #2c6ecf;
+  text-decoration: none;
+}
+
+.signin-link a:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .title-select {
+    max-width: 100%;
+  }
+}

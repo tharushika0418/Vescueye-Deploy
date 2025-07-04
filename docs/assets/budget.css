@@ -1,0 +1,61 @@
+/* Budget Table Styles */
+.budget {
+  text-align: center;
+  padding: 40px 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  margin: 40px 0;
+}
+
+.budget h2 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.budget-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.budget-table th,
+.budget-table td {
+  padding: 12px 20px;
+  text-align: center;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+}
+
+.budget-table th {
+  background-color: #000000;
+  color: white;
+}
+
+.budget-table tr:nth-child(even) {
+  background-color: #f2f2f2;
+}
+
+.budget-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.budget-table .total {
+  font-weight: bold;
+  background-color: #007bff;
+  color: rgb(4, 4, 4);
+}
+
+.budget-table td {
+  font-size: 1rem;
+}
+
+/* Styling for the total row */
+.budget-table td:nth-child() {
+  font-weight: bold;
+}
+
+.budget-table td.difference-positive {
+  color: #5bc0de;
+}

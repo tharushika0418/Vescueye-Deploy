@@ -1,0 +1,12 @@
+.footer {
+  width: 100%;
+  background-color:  #0a0231; /* Dark modern background */
+  color: #bbb; /* Soft light gray text */
+  text-align: center;
+  font-size: 12px; /* Smaller font for a thinner appearance */
+  padding: 5px 0; /* Extra thin padding */
+  border-top: 1px solid #444; /* Subtle separator */
+  position: fixed;
+  bottom: 0;
+  left: 0;
+}

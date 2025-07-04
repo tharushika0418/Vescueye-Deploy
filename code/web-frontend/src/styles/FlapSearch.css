@@ -1,0 +1,52 @@
+.dashboard-container {
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    text-align: center;
+  }
+  
+  .profile-card {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .search-container {
+    margin: 20px 0;
+  }
+  
+  .search-container input {
+    padding: 8px;
+    width: 60%;
+  }
+  
+  .search-container button {
+    padding: 8px;
+    margin-left: 10px;
+    cursor: pointer;
+  }
+  
+  .table-container {
+    margin-top: 20px;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  th {
+    background-color: #f4f4f4;
+  }
+  
+  .error {
+    color: red;
+  }
+  

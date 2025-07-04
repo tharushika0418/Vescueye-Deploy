@@ -1,0 +1,65 @@
+# .gitignore for VascuEye project (placed in code folder)
+
+# Global ignores
+.DS_Store
+Thumbs.db
+*.swp
+*.bak
+*.tmp
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+debug.log*
+
+# Node.js (Backend)
+backend/node_modules/
+backend/npm-debug.log
+backend/yarn-debug.log
+backend/yarn-error.log
+backend/.env
+backend/.env.local
+backend/dist/
+backend/coverage/
+
+mobile-app/node_modules
+
+# React (Frontend)
+web-frontend/node_modules/
+web-frontend/.cache/
+web-frontend/.next/
+web-frontend/build/
+web-frontend/out/
+web-frontend/public/static/
+web-frontend/.env
+web-frontend/.env.local
+
+mobile-app/node_modules
+
+# Editor and OS files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# AWS and Cloud Services
+.aws/
+.terraform/
+
+# AWS IoT Certificates (Backend)
+code/backend/certs/
+code/backend/certs/*
+!code/backend/certs/README.md  
+
+# Raspberry Pi and Embedded System Files
+*.bin
+*.elf
+*.hex

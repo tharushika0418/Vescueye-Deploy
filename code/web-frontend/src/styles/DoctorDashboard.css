@@ -1,0 +1,50 @@
+.dashboard-container {
+
+  max-width: 1200px;
+  margin: auto;
+  padding: 20px;
+}
+
+.doctor-profile {
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.flap-data,
+.assigned-patients {
+  /* padding: 20px; */
+  min-height: 550px;
+  overflow-y: auto;
+}
+
+.flap-image {
+  width: 100%;
+  max-height: 250px;
+  object-fit: contain;
+  margin-top: 10px;
+}
+
+.flap-item,
+.patient-item {
+  padding: 15px;
+  margin-top: 10px;
+  cursor: pointer;
+  transition: background 0.3s;
+  border-radius: 8px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.flap-item:hover,
+.patient-item:hover {
+  background-color: #f0f0f0;
+}
+
+.patient-item.selected {
+  background-color: #e0f7fa;
+}
+

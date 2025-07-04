@@ -1,0 +1,57 @@
+/* General Dashboard Container */
+body, html {
+    background-color: #fefefe;/* Change this to your preferred color */
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+  .dashboard-container {
+    background-color: #fefefe;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 1200px;
+  }
+  
+  /* Card Styling */
+  .dashboard-container .MuiCard-root {
+    width: 100%;
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  }
+  
+  
+  .admin-info-card {
+    width: 100% !important; 
+    max-width: 1800px !important;  
+  }
+  
+  /* Hover effect for other cards */
+  .dashboard-container .MuiCard-root:not(.admin-info-card) {
+    max-width: 2000px;
+  }
+  
+  /* Hover effect */
+  .dashboard-container .MuiCard-root:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Button Styling */
+  .dashboard-container .MuiButton-root {
+    border: 2px solid #000000;
+    color: #040404 !important;
+    text-transform: none;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  /* Hover Effect for Buttons */
+  .dashboard-container .MuiButton-root:hover {
+    background-color: #91b0e0 !important;
+    color: white !important;
+    border-color:#91b0e0 !important;
+  }

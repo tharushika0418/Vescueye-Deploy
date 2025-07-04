@@ -1,0 +1,68 @@
+/* Team Member Cards Styling */
+.team-members {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.team-cards {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.team-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  width: 250px;
+  text-align: center;
+  opacity: 0;
+  scale: 0.9;
+  transition: transform 0.3s ease, scale 0.3s ease, opacity 0.4s ease;
+}
+
+.team-card.visible {
+  opacity: 1;
+  scale: 1;
+}
+
+.team-card:hover {
+  transform: scale(1.05);
+}
+
+.team-card img {
+  border-radius: 50%;
+  width: 150px;
+  height: 150px;
+  margin-top: 20px;
+}
+
+.card-content {
+  padding: 15px;
+}
+
+.card-content h3 {
+  font-size: 1.2rem;
+  margin: 10px 0;
+}
+
+.card-content p {
+  color: gray;
+  margin-bottom: 10px;
+}
+
+.social-links {
+  margin-top: 10px;
+}
+
+.social-icon {
+  font-size: 20px;
+  margin-right: 12px;
+  color: #333;
+  transition: color 0.3s ease;
+}
+
+.social-icon:hover {
+  color: #0077b5; /* LinkedIn blue or any color you prefer */
+}

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>VascuEye - A Real-Time Blood Flow Monitoring System</title>
+    <link rel="stylesheet" href="assets/style.css" />
+    <link rel="stylesheet" href="assets/budget.css" />
+    <link rel="stylesheet" href="assets/team-card.css" />
+    <link rel="stylesheet" href="assets/circuit.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+  </head>
+  <body>
+    <header>
+      <h1>VascuEye</h1>
+      <nav>
+        <ul>
+          <li><a href="#about">About</a></li>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#implementation">Implementation</a></li>
+          <li><a href="#budget">Budget</a></li>
+          <li><a href="#team">Team</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <section id="about">
+      <div>
+        <h2>About VascuEye</h2>
+        <div class="about-container">
+          <div class="about-box">
+            <h3>Problem Definition</h3>
+            <p>
+              In microsurgical procedures, especially in oral and maxillofacial
+              surgeries, monitoring blood flow and flap viability is critical.
+              Traditional methods are either invasive, require expensive
+              equipment, or lack real-time monitoring capabilities, increasing
+              the risk of flap failure and complications.
+            </p>
+          </div>
+          <div class="about-box">
+            <h3>Proposed Solution</h3>
+            <p>
+              VascuEye is a non-invasive, real-time blood flow monitoring system
+              using near-infrared imaging and temperature sensing. It helps
+              surgeons monitor tissue perfusion remotely, using an embedded
+              system connected to the cloud and a mobile interface for
+              continuous observation and timely interventions.
+            </p>
+          </div>
+        </div>
+      </div>
+      <section id="features">
+        <h2>Key Features</h2>
+        <div class="features-container">
+          <div class="feature-box">
+            <h3>📡 Real-Time Monitoring</h3>
+            <p>
+              Continuously tracks blood flow and tissue temperature during
+              surgical procedures using NIR imaging and thermal sensors.
+            </p>
+          </div>
+          <div class="feature-box">
+            <h3>🩺 Non-Invasive</h3>
+            <p>
+              Eliminates the need for invasive equipment, reducing patient risk
+              and improving comfort.
+            </p>
+          </div>
+          <div class="feature-box">
+            <h3>☁️ Cloud Integration</h3>
+            <p>
+              Stores data securely in the cloud for remote access, allowing
+              doctors to monitor flap health anytime, anywhere.
+            </p>
+          </div>
+          <div class="feature-box">
+            <h3>📱 User-Friendly Interface</h3>
+            <p>
+              Intuitive mobile and web applications for doctors and admins to
+              easily monitor and interpret patient data.
+            </p>
+          </div>
+        </div>
+      </section>
+    </section>
+    <section class="nir-vein-method">
+      <div class="nir-content-wrapper">
+        <div class="nir-text">
+          <h2>Near-Infrared Imaging & Vein Detection</h2>
+          <p>
+            VascuEye uses <strong>near-infrared (NIR) light</strong>, typically
+            around <strong>850 nm</strong>, to illuminate the skin. Human tissue
+            reflects most of the IR light, but
+            <strong>deoxygenated hemoglobin in veins absorbs it</strong>, making
+            veins appear darker under NIR imaging.
+          </p>
+          <p>
+            A <strong>700 nm long-pass filter</strong> blocks visible light,
+            allowing only IR to pass. This enhances contrast between veins and
+            surrounding tissue for accurate, non-invasive visualization.
+          </p>
+        </div>
+        <div class="nir-image">
+          <img src="./images/method.png" alt="NIR Vein Imaging" />
+        </div>
+      </div>
+    </section>
+
+    <section class="images" id="architecture">
+      <section class="high-level-architecture">
+        <h2>High Level Architecture</h2>
+        <div class="architecture-container">
+          <div class="architecture-image">
+            <img
+              class="scrolling-image"
+              src="./images/HLA.png"
+              alt="Hardware Setup"
+            />
+          </div>
+          <div class="architecture-components">
+            <h3>Components Used</h3>
+            <div class="component-card">
+              <div class="component-item">
+                <span class="label">Cloud Platform:</span>
+                <span class="value">AWS (Amazon Web Services)</span>
+              </div>
+              <div class="component-item">
+                <span class="label">Single Board Computer:</span>
+                <span class="value">Raspberry Pi 3B</span>
+              </div>
+              <div class="component-item">
+                <span class="label">Camera:</span>
+                <span class="value">Pi NOIR Camera</span>
+              </div>
+              <div class="component-item">
+                <span class="label">IR LEDs:</span>
+                <span class="value">840nm / 950nm Infrared LEDs</span>
+              </div>
+              <div class="component-item">
+                <span class="label">Temperature Sensor:</span>
+                <span class="value">MLX90614</span>
+              </div>
+
+              <div class="component-item">
+                <span class="label">Distance Sensor:</span>
+                <span class="value">vl53l0x</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="software-architecture">
+        <h2>Software Components</h2>
+
+        <div class="software-grid">
+          <div class="software-item">
+            <img src="./images/icons/opencv.png" alt="OpenCV" />
+            <h3>OpenCV</h3>
+            <p>
+              Used for real-time image processing, contrast enhancement, and
+              vein visualization techniques.
+            </p>
+          </div>
+
+          <div class="software-item">
+            <img src="./images/icons/nodejs.png" alt="Node.js" />
+            <h3>Node.js</h3>
+            <p>
+              Handles server-side operations, manages API endpoints, and
+              communicates with the database and cloud.
+            </p>
+          </div>
+
+          <div class="software-item">
+            <img src="./images/icons/MongoDB-Logo.png" alt="MongoDB" />
+            <h3>MongoDB</h3>
+            <p>
+              Stores patient data, temperature records, and processed image
+              metadata in a scalable NoSQL database.
+            </p>
+          </div>
+
+          <div class="software-item">
+            <img src="./images/icons/aws-iot-core.jpg" alt="AWS IoT Core" />
+            <h3>AWS IoT Core</h3>
+            <p>
+              Securely connects the Raspberry Pi hardware to the cloud, enabling
+              real-time data upload and monitoring.
+            </p>
+          </div>
+
+          <div class="software-item">
+            <img src="./images/icons/react.png" alt="React Native" />
+            <h3>React Native</h3>
+            <p>
+              Develops a cross-platform mobile application for doctors and users
+              to access real-time monitoring data.
+            </p>
+          </div>
+        </div>
+      </section>
+    </section>
+    <!-- Video Section -->
+    <!-- <section class="video">
+      <h2>Introduction Video</h2>
+      <a href="./videos/intro.mp4" target="_blank">Watch Video</a>
+    </section> -->
+    <section id="implementation">
+      <!-- Image Sections -->
+
+      <section class="images hardware-setup">
+        <div class="hardware-container">
+          <div class="image-box">
+            <img
+              class="scrolling-image"
+              src="./images/hardware_setup.jpg"
+              alt="Hardware Setup"
+            />
+          </div>
+          <div class="text-box">
+            <h2>Initial Hardware Setup</h2>
+            <p>
+              We initially built the circuit on a breadboard using fifteen 940nm
+              IR LEDs since 850nm variants were not available at the time. To
+              power the LEDs, we used an external power supply and incorporated
+              a 5V voltage regulator to ensure a constant 5V input. Initial
+              testing was performed on a hand, and the output results are shown
+              below.
+            </p>
+          </div>
+        </div>
+      </section>
+      <section class="Circuit">
+        <div class="circuit-container">
+          <h2>Circuit Design</h2>
+          <div class="circuit-image">
+            <img
+              class="scrolling-image"
+              src="./images/circuit.jpg"
+              alt="Circuit Design"
+            />
+          </div>
+        </div>
+      </section>
+      <section class="cad-designs">
+        <div class="cad-container">
+          <h2>Final Look</h2>
+          <div class="cad-images">
+            <div class="cad-image-box">
+              <img src="./images/cad1.png" alt="CAD Design 1" />
+              <p>Top View</p>
+            </div>
+            <div class="cad-image-box">
+              <img src="./images/cad2.png" alt="CAD Design 2" />
+              <p>Bottom View</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="hand-test-section">
+        <h2>Hand Test Output</h2>
+        <div class="hand-images">
+          <img src="./images/hand1.jpg" alt="Hand Test 1" />
+          <img src="./images/hand2.jpg" alt="Hand Test 2" />
+          <img src="./images/hand3.jpg" alt="Hand Test 3" />
+        </div>
+      </section>
+
+      <section class="vein-visualization">
+        <div class="vein-container">
+          <h2>Enhanced Vein Visualization</h2>
+          <p>
+            To improve the clarity of vein structures captured by the camera, we
+            implemented several image enhancement techniques using OpenCV. One
+            of the most effective methods was
+            <strong
+              >CLAHE (Contrast Limited Adaptive Histogram Equalization)</strong
+            >, which helps enhance local contrast in infrared images without
+            amplifying noise.
+          </p>
+          <p>
+            Additionally, we performed <strong>grayscale conversion</strong>,
+            followed by <strong>contrast stretching</strong> and
+            <strong>Gaussian blurring</strong> to suppress noise and improve
+            edge definition. These preprocessing steps significantly enhanced
+            the visibility of veins, especially under uneven lighting
+            conditions.
+          </p>
+          <p>
+            This improved visualization played a crucial role in enabling
+            real-time monitoring and assessment of blood flow using our
+            near-infrared imaging system.
+          </p>
+        </div>
+      </section>
+
+      <section class="images">
+        <h2>Enhanced Image Sample</h2>
+        <img
+          class="scrolling-image"
+          src="./images/enhanced_image.png"
+          alt="Enhanced Image Sample"
+        />
+      </section>
+    </section>
+
+    <!-- Budget Section -->
+    <section id="budget" class="budget">
+      <h2>Project Budget</h2>
+      <table class="budget-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Unit Cost</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Temperature Sensor (MLX90614)</td>
+            <td>1</td>
+            <td>Rs. 4500.00</td>
+            <td>Rs. 4500.00</td>
+          </tr>
+          <tr>
+            <td>Raspberry Pi 3 Model B</td>
+            <td>1</td>
+            <td>Rs. 20400.00</td>
+            <td>Rs. 20400.00</td>
+          </tr>
+          <tr>
+            <td>Raspberry Pi NoIR Camera Sony IMX219</td>
+            <td>1</td>
+            <td>Rs. 7800.00</td>
+            <td>Rs. 7800.00</td>
+          </tr>
+          <tr>
+            <td>IR LEDs (850nm)</td>
+            <td>10</td>
+            <td>Rs. 200.00</td>
+            <td>Rs. 2000.00</td>
+          </tr>
+          <tr>
+            <td>IR LEDs (940nm)</td>
+            <td>10</td>
+            <td>Rs. 200.00</td>
+            <td>Rs. 2000.00</td>
+          </tr>
+          <tr>
+            <td>3.5 Inch LCD Display</td>
+            <td>1</td>
+            <td>Rs. 4000.00</td>
+            <td>Rs. 4000.00</td>
+          </tr>
+          <tr>
+            <td>Wires and Other Electronic Components</td>
+            <td>-</td>
+            <td>Rs. 1000.00</td>
+            <td>Rs. 1000.00</td>
+          </tr>
+          <tr class="total">
+            <td>Total Price</td>
+            <td>-</td>
+            <td>-</td>
+            <td>Rs. 41700.00</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Team Member Cards -->
+    <section id="team" class="team-members">
+      <h2>Meet the Team</h2>
+      <div class="team-cards">
+        <!-- Supervisor Card -->
+        <div class="team-card">
+          <img
+            src="https://people.ce.pdn.ac.lk/images/staff/academic-staff/isuru-nawinne.png"
+            alt="Supervisor Image"
+          />
+          <div class="card-content">
+            <h3>Dr. Isuru Nawinne</h3>
+            <p>Project Supervisor</p>
+            <div class="social-links">
+              <a
+                href="https://www.linkedin.com/in/isuru-nawinne-73302833/"
+                target="_blank"
+                class="social-icon"
+                title="LinkedIn"
+              >
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://people.ce.pdn.ac.lk/staff/academic/isuru-nawinne/"
+                target="_blank"
+                class="social-icon"
+                title="Department Profile"
+              >
+                <i class="fas fa-user-tie"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <!-- Card 1 -->
+        <div class="team-card">
+          <img
+            src="https://avatars.githubusercontent.com/u/150885177?v=4"
+            alt="T.L.B Mapagedara"
+          />
+          <div class="card-content">
+            <h3>T.L.B Mapagedara</h3>
+            <p>Team Member</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/Tharindu09"
+                target="_blank"
+                class="social-icon"
+                title="GitHub"
+              >
+                <i class="fab fa-github"></i>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/tharindu-mapagedara-6119572a0/"
+                target="_blank"
+                class="social-icon"
+                title="LinkedIn"
+              >
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://people.ce.pdn.ac.lk/students/e20/248/"
+                target="_blank"
+                class="social-icon"
+                title="Department Profile"
+              >
+                <i class="fas fa-user"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="team-card">
+          <img
+            src="https://people.ce.pdn.ac.lk/images/students/e20/e20158.jpg"
+            alt="J.G.C Jananga"
+          />
+          <div class="card-content">
+            <h3>J.G.C Jananga</h3>
+            <p>Team Member</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/tgcjananga"
+                target="_blank"
+                class="social-icon"
+                title="GitHub"
+              >
+                <i class="fab fa-github"></i>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/your-linkedin"
+                target="_blank"
+                class="social-icon"
+                title="LinkedIn"
+              >
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://people.ce.pdn.ac.lk/students/e20/158/"
+                target="_blank"
+                class="social-icon"
+                title="Department Profile"
+              >
+                <i class="fas fa-user"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="team-card">
+          <img
+            src="https://people.ce.pdn.ac.lk/images/students/e20/e20453.jpg"
+            alt="R.J Yogesh"
+          />
+          <div class="card-content">
+            <h3>R.J Yogesh</h3>
+            <p>Team Member</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/janithyogesh"
+                target="_blank"
+                class="social-icon"
+                title="GitHub"
+              >
+                <i class="fab fa-github"></i>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/your-linkedin"
+                target="_blank"
+                class="social-icon"
+                title="LinkedIn"
+              >
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://people.ce.pdn.ac.lk/students/e20/453/"
+                target="_blank"
+                class="social-icon"
+                title="Department Profile"
+              >
+                <i class="fas fa-user"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="team-card">
+          <img
+            src="https://people.ce.pdn.ac.lk/images/students/e20/e20300.jpg"
+            alt="H.A.M.T Prasadinie"
+          />
+          <div class="card-content">
+            <h3>H.A.M.T Prasadinie</h3>
+            <p>Team Member</p>
+            <div class="social-links">
+              <a
+                href="https://github.com/tharushika0418"
+                target="_blank"
+                class="social-icon"
+                title="GitHub"
+              >
+                <i class="fab fa-github"></i>
+              </a>
+              <a
+                href="https://www.linkedin.com/in/your-linkedin"
+                target="_blank"
+                class="social-icon"
+                title="LinkedIn"
+              >
+                <i class="fab fa-linkedin"></i>
+              </a>
+              <a
+                href="https://people.ce.pdn.ac.lk/students/e20/300/"
+                target="_blank"
+                class="social-icon"
+                title="Department Profile"
+              >
+                <i class="fas fa-user"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>&copy; 2025 VascuEye Project</p>
+      <div class="footer-links">
+        <a href="https://github.com/cepdnaclk/e20-3yp-Vascueye" target="_blank"
+          >Project Repository</a
+        >
+        |
+        <a href="http://www.ce.pdn.ac.lk/" target="_blank"
+          >Department of Computer Engineering</a
+        >
+      </div>
+    </footer>
+
+    <script src="assets/script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,16 @@
+.dashboard-container {
+    text-align: center;
+    padding: 50px;
+    background-color:#fefefe;
+  }
+  
+  .dashboard-container h1 {
+    color: #222;
+    font-size: 2.5rem;
+  }
+  
+  .dashboard-container p {
+    font-size: 1.2rem;
+    color: #444;
+  }
+  
