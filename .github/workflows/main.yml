@@ -27,23 +27,23 @@ jobs:
       ##############################################
       - name: Install backend dependencies
         run: |
-          cd backend
+          cd code/backend
           npm ci
 
       - name: Build backend
         run: |
-          cd backend
+          cd code/backend
           npm run build --if-present
 
       - name: Set up backend environment variables
         run: |
-          cd backend
+          cd code/backend
           touch .env
           echo "${{ secrets.VESCUEYE_SECRETS }}" > .env
 
       - name: Restart backend with PM2
         run: |
-          cd backend
+          cd code/backend
           pm2 restart api || pm2 start dist/index.js --name api
 
       ##############################################
@@ -51,22 +51,22 @@ jobs:
       ##############################################
       - name: Install frontend dependencies
         run: |
-          cd web-frontend
+          cd code/web-frontend
           npm ci
 
       - name: Build frontend
         run: |
-          cd web-frontend
+          cd code/web-frontend
           npm run build
 
       - name: Set up frontend environment variables
         run: |
-          cd web-frontend
+          cd code/web-frontend
           touch .env
           echo "${{ secrets.VESCUEYE_SECRETS_FRONTEND }}" > .env
 
       - name: Deploy frontend to web server (e.g. nginx)
         run: |
-          # Assuming frontend output is in web-frontend/dist or web-frontend/build
+          # Update the path below if your frontend output is different (like 'build' instead of 'dist')
           sudo rm -rf /var/www/html/*
-          sudo cp -r web-frontend/dist/* /var/www/html/
+          sudo cp -r code/web-frontend/dist/* /var/www/html/
