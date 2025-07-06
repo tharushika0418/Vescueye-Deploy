@@ -6,7 +6,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     strategy:
       matrix:
@@ -24,9 +24,11 @@ jobs:
 
     - name: Install dependencies
       run: npm ci
+      working-directory: web-frontend
 
     - name: Build React app
       run: npm run build
+      working-directory: web-frontend
 
     - name: Deploy to EC2
       uses: appleboy/scp-action@v0.1.5
@@ -34,8 +36,8 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "build/*"
-        target: "/var/www/html"  # change if your web server serves another folder
+        source: "web-frontend/build/*"
+        target: "/var/www/html"
 
     - name: Restart Nginx (optional)
       uses: appleboy/ssh-action@v0.1.7
