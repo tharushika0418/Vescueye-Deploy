@@ -1,10 +1,8 @@
 name: Deploy to EC2
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -34,8 +32,9 @@ jobs:
           ${{ secrets.ENV_FILE }}
           EOF
           
-          # Restart your application with PM2
-          pm2 restart vescueye-backend-app || pm2 start app.js --name vescueye-backend-app
+          # Stop existing process if it exists, then start fresh
+          pm2 delete vescueye-backend-app 2>/dev/null || true
+          pm2 start server.js --name vescueye-backend-app
           
           # Save PM2 configuration
           pm2 save
