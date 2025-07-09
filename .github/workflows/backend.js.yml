@@ -29,7 +29,7 @@ jobs:
           
           # Create .env file from the secret
           cat << 'EOF' > .env
-          ${{ secrets.ENV_FILE }}
+          ${{ secrets.VESCUEYE_SECRETS }}
           EOF
           
           # Stop existing process if it exists, then start fresh
