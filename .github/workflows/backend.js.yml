@@ -21,7 +21,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           # Navigate to your app directory
-          cd /home/ubuntu/vescueye-backend
+          cd /home/ubuntu/actions-runner/_work/Vescueye-Deploy/Vescueye-Deploy/code/backend
           
           # Pull latest code from GitHub
           git pull origin main
@@ -31,11 +31,11 @@ jobs:
           
           # Create .env file from the secret
           cat << 'EOF' > .env
-          ${{ secrets.VESCUEYE_SECRETS }}
+          ${{ secrets.ENV_FILE }}
           EOF
           
           # Restart your application with PM2
-          pm2 restart vescueye-backend || pm2 start app.js --name vescueye-backend
+          pm2 restart vescueye-backend-app || pm2 start app.js --name vescueye-backend-app
           
           # Save PM2 configuration
           pm2 save
