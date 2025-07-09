@@ -2,13 +2,12 @@ const awsIot = require("aws-iot-device-sdk");
 const FlapData = require("./models/FlapData");
 require("dotenv").config();
 
-// Define the fallback paths for server
-
-const fallbackKeyPath = "/home/ubuntu/certs/privateKey.pem";
-const fallbackCertPath = "/home/ubuntu/certs/certificate.pem";
-const fallbackCaPath = "/home/ubuntu/certs/caCert.pem";
-const fallbackClientId = "yourClientId"; // Replace with your client ID for the server
-const fallbackHost = "yourEndpoint.iot.region.amazonaws.com"; // Replace with your endpoint
+// Define the fallback paths for server - UPDATED to use permanent location
+const fallbackKeyPath = "/etc/ssl/iot-certs/private.pem.key";
+const fallbackCertPath = "/etc/ssl/iot-certs/certificate.pem.crt";
+const fallbackCaPath = "/etc/ssl/iot-certs/rootCA.pem";
+const fallbackClientId = "yourClientId"; // Replace with your actual client ID
+const fallbackHost = "yourEndpoint.iot.region.amazonaws.com"; // Replace with your actual endpoint
 
 // Get the key paths from environment variables, fallback to server paths if not set
 const keyPath = process.env.AWS_IOT_PRIVATE_KEY || fallbackKeyPath;
@@ -23,10 +22,10 @@ const device = awsIot.device({
   certPath: certPath,
   caPath: caPath,
   clientId: clientId,
-
   host: host,
 });
 
+// Rest of your code remains the same...
 let latestData = {
   patient_id: null,
   temperature: null,
