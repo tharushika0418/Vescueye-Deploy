@@ -2,6 +2,7 @@ const User = require("../models/User");
 const Patient = require("../models/Patient.js");
 const Doctor = require("../models/Doctor.js");
 const FlapData = require("../models/FlapData.js");
+const { sendEmail } = require("../emailService.js");
 
 // Get all doctors
 exports.getDoctors = async (req, res) => {
@@ -108,12 +109,31 @@ exports.registerDoctor = async (req, res) => {
     // Create new doctor
     const newDoctor = new Doctor({ name, email, specialty, contact, age });
 
-    // Save to database
-    await newDoctor.save();
+    // Send email to doctor
+    const subject = "Welcome to Vascueye !";
+    const message = `Dear Dr. ${name},
 
-    res
-      .status(201)
-      .json({ message: "Doctor registered successfully", doctor: newDoctor });
+You have been registered with Vescueye by your hospital to access patient monitoring data and updates.
+
+If you were not expecting this email or believe this is a mistake, please contact your hospital administrator.
+
+Best regards,  
+The Vescueye Team  
+supportvascueye@gmail.com`;
+    const emailResponse = await sendEmail(email, subject, message);
+
+    if (!emailResponse.success) {
+      return res
+        .status(500)
+        .json({ message: "Error sending email", error: emailResponse.error });
+    } else {
+      console.log("Email sent successfully");
+      // Save to database
+      await newDoctor.save();
+      res
+        .status(201)
+        .json({ message: "Doctor registered successfully", doctor: newDoctor });
+    }
   } catch (error) {
     console.error("Error registering doctor:", error);
     res
@@ -308,6 +328,19 @@ exports.assignAllPatientsToDoctor = async (req, res) => {
       message: "All patients assigned successfully",
       modifiedCount: updatedPatients.modifiedCount,
     });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
+
+//delete doctor
+exports.deleteDoctor = async (req, res) => {
+  try {
+    const doctor = await Doctor.findByIdAndDelete(req.params.id);
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+    res.status(200).json({ message: "Doctor deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Server error", details: error.message });
   }

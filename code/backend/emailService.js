@@ -4,18 +4,19 @@ const nodemailer = require("nodemailer");
 // Function to send an email
 const sendEmail = async (to, subject, text) => {
   const transporter = nodemailer.createTransport({
-    host: "smtp.office365.com",
-    port: 587,
-    secure: false,
+    service: "gmail",
     auth: {
-      user: process.env.OUTLOOK_EMAIL,
-      pass: process.env.OUTLOOK_PASSWORD,
+      user: process.env.EMAIL_USER, // Your Gmail address
+      pass: process.env.EMAIL_PASS, // Use an App Password if 2FA is enabled
+    },
+    tls: {
+      rejectUnauthorized: false, // optional, can help in some environments
     },
   });
 
   try {
     const mailOptions = {
-      from: process.env.OUTLOOK_EMAIL,
+      from: process.env.EMAIL_USER,
       to,
       subject,
       text,

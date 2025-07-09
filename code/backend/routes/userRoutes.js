@@ -17,6 +17,7 @@ const {
   getUnassignedPatients,
   assignPatientToDoctor,
   assignAllPatientsToDoctor,
+  deleteDoctor,
 } = require("../controllers/userController");
 
 const router = express.Router();
@@ -75,5 +76,8 @@ router.delete(
     }
   }
 );
+
+//delete doctor
+router.delete("/doctor/:id", requireRole("hospital"), deleteDoctor);
 
 module.exports = router;

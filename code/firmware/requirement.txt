@@ -1,0 +1,5 @@
+paho-mqtt
+pymongo
+adafruit-blinka
+adafruit-circuitpython-vl53l0x
+adafruit-circuitpython-mlx90614

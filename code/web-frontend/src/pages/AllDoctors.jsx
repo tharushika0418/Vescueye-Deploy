@@ -12,6 +12,13 @@ import {
   MenuItem,
   TextField,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 const AllDoctors = () => {
@@ -22,6 +29,11 @@ const AllDoctors = () => {
   const [searchTerm, setSearchTerm] = useState(""); // <-- New state
   const [visibleDoctors, setVisibleDoctors] = useState([]); // For animation
   const [assignedPatients, setAssignedPatients] = useState([]);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [doctorToRemove, setDoctorToRemove] = useState(null);
+
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMsg, setSnackbarMsg] = useState("");
 
   const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
@@ -72,6 +84,37 @@ const AllDoctors = () => {
       console.log("assignedPatients", assignedPatients);
     } catch (error) {
       console.error("Error fetching patients:", error);
+    }
+  };
+
+  const openConfirmDialog = (doctor) => {
+    setDoctorToRemove(doctor);
+    setConfirmOpen(true);
+  };
+
+  // Close confirm dialog
+  const closeConfirmDialog = () => {
+    setConfirmOpen(false);
+    setDoctorToRemove(null);
+  };
+
+  // Confirm discharge
+  const handleConfirmDischarge = async () => {
+    try {
+      await axios.delete(`${API_URL}/users/doctor/${doctorToRemove._id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setDoctors((prev) => prev.filter((p) => p._id !== doctorToRemove._id));
+      setSnackbarMsg(`Dr. ${doctorToRemove.name} removed successfully.`);
+      setSnackbarOpen(true);
+
+      closeConfirmDialog();
+    } catch (err) {
+      console.error("Delete failed", err);
+      setSnackbarMsg("Delete failed. Please try again.");
+      setSnackbarOpen(true);
+      closeConfirmDialog();
     }
   };
 
@@ -176,6 +219,7 @@ const AllDoctors = () => {
                       variant="outlined"
                       size="small"
                       onClick={() => getAssignedPatients(doc.email)}
+                      sx={{ marginRight: 4 }}
                     >
                       Assigned Patients
                     </Button>
@@ -190,12 +234,53 @@ const AllDoctors = () => {
                         ))}
                       </ul>
                     )}
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      color="error"
+                      onClick={() => openConfirmDialog(doc)}
+                    >
+                      Delete
+                    </Button>
                   </>
                 }
               />
             </ListItem>
           ))}
         </List>
+        {/* Confirmation Dialog */}
+        <Dialog open={confirmOpen} onClose={closeConfirmDialog}>
+          <DialogTitle>Confirm Remove</DialogTitle>
+          <DialogContent>
+            <DialogContentText>
+              Are you sure you want to remove Dr.{" "}
+              <strong>{doctorToRemove?.name}</strong>? This action cannot be
+              undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={closeConfirmDialog}>Cancel</Button>
+            <Button color="error" onClick={handleConfirmDischarge}>
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar Notification */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarMsg.includes("failed") ? "error" : "success"}
+            sx={{ width: "100%" }}
+          >
+            {snackbarMsg}
+          </Alert>
+        </Snackbar>
       </Box>
     </Box>
   );

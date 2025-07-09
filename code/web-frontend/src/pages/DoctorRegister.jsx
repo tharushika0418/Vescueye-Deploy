@@ -101,7 +101,6 @@ const DoctorRegister = () => {
     } else {
       console.error("Error registering doctor");
       window.alert(data.message || "Failed to register doctor");
-      window.location.reload();
     }
   };
 

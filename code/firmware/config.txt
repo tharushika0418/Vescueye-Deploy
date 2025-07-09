@@ -1,0 +1,7 @@
+GPIO 26 : SDA
+GPIO 16 : SCL
+
+pip install -r requirement.txt
+
+sudo systemctl stop project.service
+sudo systemctl stop project-gui.service

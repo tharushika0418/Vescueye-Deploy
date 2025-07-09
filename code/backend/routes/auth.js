@@ -10,7 +10,7 @@ require("dotenv").config();
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const { error } = require("console");
-const REACT_URL = process.env.REACT_APP_URL || "http://localhost:3000";
+const REACT_URL = process.env.REACT_APP_URL || "https://vescueye.duckdns.org";
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
