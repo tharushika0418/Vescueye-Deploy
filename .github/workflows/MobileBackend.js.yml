@@ -2,8 +2,6 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 jobs:
   deploy:
@@ -13,108 +11,36 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
     
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-    
     - name: Install dependencies
       run: |
         cd code/mobile-app/Backend
         npm ci
     
-    - name: Run tests (if you have tests)
+    - name: Stop existing app
       run: |
-        cd code/mobile-app/Backend
-        npm test || echo "No tests to run"
-      continue-on-error: true
-    
-    - name: Build application (if you have a build step)
-      run: |
-        cd code/mobile-app/Backend
-        npm run build || echo "No build step required"
-      continue-on-error: true
-    
-    - name: Stop existing application
-      run: |
-        # Kill any existing node processes for this app
         sudo pkill -f "node.*server.js" || true
-        sudo pkill -f "npm.*start" || true
-        # Kill any process using port 5001
         sudo lsof -ti:5001 | sudo xargs kill -9 || true
-        # Wait for processes to stop
-        sleep 5
+        sleep 3
     
     - name: Start application
       run: |
         cd code/mobile-app/Backend
-        # Start the application in the background
         nohup npm start > app.log 2>&1 &
         echo $! > app.pid
-        
-    - name: Wait for application to start
-      run: sleep 15
+        sleep 10
     
     - name: Health check
       run: |
         cd code/mobile-app/Backend
-        
-        # Check if process is still running
-        if [ -f app.pid ]; then
-          PID=$(cat app.pid)
-          if ps -p $PID > /dev/null; then
-            echo "Application is running with PID: $PID"
+        if [ -f app.pid ] && ps -p $(cat app.pid) > /dev/null; then
+          echo "✅ Application started successfully"
+          if nc -z localhost 5001; then
+            echo "✅ Port 5001 is accessible"
           else
-            echo "Application process not found"
-            echo "=== Application Log ==="
-            cat app.log
-            exit 1
+            echo "⚠️  Port check failed but app is running"
           fi
         else
-          echo "PID file not found"
+          echo "❌ Application failed to start"
+          cat app.log
           exit 1
-        fi
-        
-        # Check if the port is accessible (using correct port 5001)
-        echo "Starting health checks on port 5001..."
-        for i in {1..10}; do
-          # Try different endpoints
-          if curl -f http://localhost:5001/health 2>/dev/null; then
-            echo "Health check passed on /health endpoint"
-            exit 0
-          elif curl -f http://localhost:5001 2>/dev/null; then
-            echo "Health check passed on root endpoint"
-            exit 0
-          elif curl -f http://localhost:5001/api/health 2>/dev/null; then
-            echo "Health check passed on /api/health endpoint"
-            exit 0
-          elif nc -z localhost 5001 2>/dev/null; then
-            echo "Port 5001 is accessible"
-            exit 0
-          fi
-          echo "Health check attempt $i failed, retrying..."
-          sleep 3
-        done
-        
-        echo "Health check failed after 10 attempts"
-        echo "=== Port Check ==="
-        netstat -tlnp | grep :5001 || echo "Port 5001 not listening"
-        echo "=== Application Log ==="
-        cat app.log
-        exit 1
-    
-    - name: Display final status
-      run: |
-        cd code/mobile-app/Backend
-        echo "=== Final Application Status ==="
-        if [ -f app.pid ]; then
-          PID=$(cat app.pid)
-          if ps -p $PID > /dev/null; then
-            echo "✅ Application is running with PID: $PID"
-            echo "📊 Port status:"
-            netstat -tlnp | grep :5001
-          else
-            echo "❌ Application process not found"
-          fi
         fi
