@@ -1,0 +1,64 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: Navigate to backend directory
+      run: cd code/mobile-app/Backend
+      
+    - name: Install dependencies
+      run: |
+        cd code/mobile-app/Backend
+        npm ci
+    
+    
+    - name: Build application (if you have a build step)
+      run: |
+        cd code/mobile-app/Backend
+        npm run build
+      continue-on-error: true  # Remove this if build is mandatory
+    
+    - name: Stop existing application
+      run: |
+        sudo pkill -f "node.*Vescueye" || true
+        sudo pkill -f "npm.*start" || true
+        # Alternative: if using PM2
+        # pm2 stop Vescueye || true
+    
+    - name: Start application
+      run: |
+        cd code/mobile-app/Backend
+        # Option 1: Start with nohup (runs in background)
+        nohup npm start > /dev/null 2>&1 &
+        
+        # Option 2: Using PM2 (recommended)
+        # pm2 start npm --name "Vescueye" -- start
+        # pm2 save
+        
+    - name: Wait for application to start
+      run: sleep 15
+    
+    - name: Health check
+      run: |
+        # Check if the process is running
+        pgrep -f "node.*Vescueye" || (echo "Application not running" && exit 1)
+        
+        # Check if the port is accessible (adjust port if needed)
+        curl -f http://localhost:3000/health || curl -f http://localhost:3000 || (echo "Health check failed" && exit 1)
