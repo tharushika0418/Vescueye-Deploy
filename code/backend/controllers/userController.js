@@ -119,7 +119,7 @@ If you were not expecting this email or believe this is a mistake, please contac
 
 Best regards,  
 The Vescueye Team  
-supportvascueye@gmail.com`;
+vascueye@gmail.com`;
     const emailResponse = await sendEmail(email, subject, message);
 
     if (!emailResponse.success) {

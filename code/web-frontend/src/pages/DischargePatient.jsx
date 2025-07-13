@@ -39,6 +39,8 @@ const DischargePatient = () => {
         setPatients(res.data);
       } catch (err) {
         console.error("Failed to fetch patients", err);
+        setSnackbarMsg("Failed to load patients. Please try again.");
+        setSnackbarOpen(true);
       }
     };
 
@@ -95,34 +97,102 @@ const DischargePatient = () => {
   };
 
   return (
-    <Box p={4}>
-      <Typography variant="h4" gutterBottom>
+    <Box
+      p={{ xs: 2, md: 4 }} // Responsive padding
+      sx={{
+        backgroundColor: "#f5f5f5", // Light background for the whole page
+        minHeight: "100vh",
+      }}
+    >
+      <Typography
+        variant="h4"
+        component="h1" // Use h1 for semantic correctness
+        gutterBottom
+        align="center"
+        sx={{
+          mb: 4,
+          color: "#3f51b5", // A primary color for the title
+          fontWeight: "bold",
+        }}
+      >
         Discharge Patient
       </Typography>
 
-      <TextField
-        label="Search by Name or Contact"
-        variant="outlined"
-        fullWidth
-        margin="normal"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+      <Box sx={{ mb: 4, maxWidth: 600, mx: "auto" }}>
+        {" "}
+        {/* Centered and max-width for search */}
+        <TextField
+          label="Search by Patient Name or Contact" // More descriptive label
+          variant="outlined"
+          fullWidth
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: "8px", // Slightly rounded corners
+              backgroundColor: "#ffffff", // White background for the input
+            },
+            "& .MuiInputLabel-root": {
+              color: "#757575", // Lighter label color
+            },
+          }}
+        />
+      </Box>
 
-      <Grid container spacing={2}>
+      <Grid container spacing={3} justifyContent="center">
+        {" "}
+        {/* More spacing and centered grid */}
+        {filtered.length === 0 && (
+          <Grid item xs={12}>
+            <Typography variant="h6" align="center" color="textSecondary">
+              {searchTerm
+                ? "No patients found matching your search."
+                : "No patients to display."}
+            </Typography>
+          </Grid>
+        )}
         {filtered.map((p) => (
-          <Grid item xs={12} key={p._id}>
-            <Card>
+          <Grid item xs={12} sm={8} md={6} lg={4} key={p._id}>
+            {" "}
+            {/* Responsive card width */}
+            <Card
+              elevation={3} // Add some shadow for depth
+              sx={{
+                borderRadius: "12px", // More rounded corners
+                transition: "transform 0.2s ease-in-out", // Smooth hover effect
+                "&:hover": {
+                  transform: "translateY(-5px)", // Lift card on hover
+                  boxShadow: "0 6px 12px rgba(0,0,0,0.1)", // Enhanced shadow on hover
+                },
+              }}
+            >
               <CardContent>
-                <Typography variant="h6">{p.name}</Typography>
-                <Typography variant="body2">Contact: {p.contact}</Typography>
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{ mb: 1, color: "#333", fontWeight: "medium" }}
+                >
+                  {p.name}
+                </Typography>
+                <Typography variant="body1" color="textSecondary" sx={{ mb: 2 }}>
+                  Contact: {p.contact || "N/A"}
+                </Typography>
                 <Button
                   variant="contained"
                   color="error"
+                  fullWidth // Make button take full width of card
                   onClick={() => openConfirmDialog(p)}
-                  sx={{ mt: 1 }}
+                  sx={{
+                    mt: 1,
+                    py: 1.2, // More vertical padding
+                    borderRadius: "8px",
+                    fontWeight: "bold",
+                    "&:hover": {
+                      backgroundColor: "#d32f2f", // Darker red on hover
+                    },
+                  }}
                 >
-                  Discharge
+                  Discharge Patient
                 </Button>
               </CardContent>
             </Card>
@@ -131,19 +201,39 @@ const DischargePatient = () => {
       </Grid>
 
       {/* Confirmation Dialog */}
-      <Dialog open={confirmOpen} onClose={closeConfirmDialog}>
-        <DialogTitle>Confirm Discharge</DialogTitle>
+      <Dialog
+        open={confirmOpen}
+        onClose={closeConfirmDialog}
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+      >
+        <DialogTitle id="confirm-dialog-title" sx={{ color: "#d32f2f" }}>
+          Confirm Patient Discharge
+        </DialogTitle>
         <DialogContent>
-          <DialogContentText>
-            Are you sure you want to discharge{" "}
-            <strong>{patientToDischarge?.name}</strong>? This action cannot be
-            undone.
+          <DialogContentText id="confirm-dialog-description">
+            Are you absolutely sure you want to discharge{" "}
+            <Typography component="span" fontWeight="bold" color="text.primary">
+              {patientToDischarge?.name}
+            </Typography>
+            ? This action is irreversible and cannot be undone.
           </DialogContentText>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={closeConfirmDialog}>Cancel</Button>
-          <Button color="error" onClick={handleConfirmDischarge}>
-            Discharge
+        <DialogActions sx={{ p: 2 }}>
+          <Button
+            onClick={closeConfirmDialog}
+            variant="outlined"
+            sx={{ mr: 1 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            color="error"
+            onClick={handleConfirmDischarge}
+            variant="contained"
+            autoFocus
+          >
+            Confirm Discharge
           </Button>
         </DialogActions>
       </Dialog>
@@ -151,14 +241,15 @@ const DischargePatient = () => {
       {/* Snackbar Notification */}
       <Snackbar
         open={snackbarOpen}
-        autoHideDuration={3000}
+        autoHideDuration={4000} // Slightly longer duration
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert
           onClose={() => setSnackbarOpen(false)}
           severity={snackbarMsg.includes("failed") ? "error" : "success"}
-          sx={{ width: "100%" }}
+          sx={{ width: "100%", borderRadius: "8px" }} // Rounded corners for alert
+          variant="filled" // Filled variant for better visibility
         >
           {snackbarMsg}
         </Alert>

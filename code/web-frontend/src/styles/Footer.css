@@ -1,12 +1,142 @@
+/* Footer Container */
 .footer {
   width: 100%;
-  background-color:  #0a0231; /* Dark modern background */
-  color: #bbb; /* Soft light gray text */
-  text-align: center;
-  font-size: 12px; /* Smaller font for a thinner appearance */
-  padding: 5px 0; /* Extra thin padding */
-  border-top: 1px solid #444; /* Subtle separator */
+  background: linear-gradient(135deg, #0a0231 0%, #1a1a2e 100%);
+  color: #e2e8f0;
   position: fixed;
   bottom: 0;
   left: 0;
+  z-index: 1000;
+  border-top: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 -2px 4px -1px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+}
+
+/* Footer Content Layout */
+.footer-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  min-height: 32px;
+}
+
+/* Footer Sections */
+.footer-left,
+.footer-center,
+.footer-right {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.footer-left {
+  justify-content: flex-start;
+}
+
+.footer-center {
+  justify-content: center;
+}
+
+.footer-right {
+  justify-content: flex-end;
+}
+
+/* Logo Text */
+.logo-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  letter-spacing: 0.5px;
+  opacity: 0.9;
+}
+
+/* Copyright */
+.copyright {
+  font-size: 11px;
+  color: #94a3b8;
+  margin: 0;
+  font-weight: 400;
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 8px;
+  font-size: 10px;
+}
+
+.status-dot {
+  width: 4px;
+  height: 4px;
+  background: #10b981;
+  border-radius: 50%;
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.status-text {
+  color: #10b981;
+  font-weight: 500;
+  font-size: 10px;
+}
+
+/* Pulse Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .footer-content {
+    flex-direction: row;
+    padding: 4px 16px;
+    min-height: 28px;
+  }
+  
+  .logo-text {
+    font-size: 11px;
+  }
+  
+  .copyright {
+    font-size: 10px;
+  }
+  
+  .status-indicator {
+    padding: 1px 4px;
+  }
+  
+  .status-text {
+    font-size: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-content {
+    padding: 4px 12px;
+  }
+  
+  .logo-text {
+    font-size: 10px;
+  }
+  
+  .copyright {
+    font-size: 9px;
+  }
+  
+  .status-dot {
+    width: 3px;
+    height: 3px;
+  }
 }

@@ -1,73 +1,608 @@
+/* Reset and Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure body has top padding to account for fixed navbar */
+body {
+  padding-top: 70px !important; /* Reduced padding from 90px to 70px */
+  margin: 0;
+}
+
 .navbar {
-  margin-top: 0;
-  background-color: #0a0231;
-  color: #fff;
-  padding: 0.5rem 2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: rgba(26, 26, 26, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1rem 2rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+}
+
+.navbar-scrolled {
+  background: rgba(26, 26, 26, 0.98);
+  padding: 0.75rem 2rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
 }
 
 .navbar-container {
-  width: 100%;
-  max-width: 1200px;
+  max-width: 1400px;
+  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
+/* Logo Styles */
 .navbar-logo {
   display: flex;
-  font-size: 2rem; /* Increased font size */
-  font-weight: bold;
-  color: #fff;
-  text-decoration: none;
   align-items: center;
-}
-.logo-img {
-  width: 75px; /* Adjust size */
-  height: auto;
-  margin-right: 20px; /* Space between logo and text */
+  text-decoration: none;
+  color: #fff;
+  font-size: 1.8rem;
+  font-weight: 800;
+  transition: transform 0.3s ease;
+  z-index: 1001;
+  gap: 0.5rem;
 }
 
-.navbar-links {
-  list-style: none;
+.navbar-logo:hover {
+  transform: scale(1.05);
+}
+
+.logo-text {
+  background: linear-gradient(135deg, #00bcd4, #4fc3f7);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 2px 10px rgba(0, 188, 212, 0.3);
+}
+
+/* Heart Animation Styles */
+.heart-container {
+  width: 24px;
+  height: 24px;
   display: flex;
-  gap: 2rem;
   align-items: center;
+  justify-content: center;
+  margin-right: 4px;
+}
+
+.heart-svg {
+  width: 100%;
+  height: 100%;
+  color: #e74c3c;
+  filter: drop-shadow(0 2px 8px rgba(231, 76, 60, 0.4));
+}
+
+.heart-icon {
+  animation: heartbeat 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes heartbeat {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(0.9);
+  }
+}
+
+/* Hover effect for the heart */
+.navbar-logo:hover .heart-icon {
+  animation-duration: 1s;
+  color: #c0392b;
+}
+
+/* Synchronized animations */
+.navbar-logo:hover .heart-icon,
+.navbar-logo:hover .pulse-line {
+  animation-duration: 1s;
+}
+
+/* ECG Pulse Animation Styles */
+.pulse-container {
+  width: 60px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+}
+
+.pulse-svg {
+  width: 100%;
+  height: 100%;
+  color: #00bcd4;
+  overflow: visible;
+}
+
+.pulse-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: ecg-pulse 2s ease-in-out infinite;
+}
+
+@keyframes ecg-pulse {
+  0% {
+    stroke-dashoffset: 200;
+    opacity: 0.3;
+  }
+  20% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  40% {
+    stroke-dashoffset: -50;
+    opacity: 1;
+  }
+  60% {
+    stroke-dashoffset: -100;
+    opacity: 0.8;
+  }
+  80% {
+    stroke-dashoffset: -150;
+    opacity: 0.5;
+  }
+  100% {
+    stroke-dashoffset: -200;
+    opacity: 0.3;
+  }
+}
+
+/* Hover effect for the pulse */
+.navbar-logo:hover .pulse-line {
+  animation-duration: 0.8s;
+  stroke: #4fc3f7;
+}
+
+/* Navigation Links */
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
   font-weight: 500;
-  transition: color 0.3s ease-in-out;
-  font-size: 1.6rem; /* Increased font size */
+  font-size: 1rem;
 }
 
 .navbar-links li {
-  display: inline;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px; /* Fixed height for all nav items */
 }
 
-.navbar-links a {
+.nav-link {
   text-decoration: none;
   color: #fff;
-  font-size: 1.2rem; /* Increased font size */
-  transition: color 0.3s ease-in-out;
+  padding: 0.5rem 1rem; /* Added horizontal padding for better alignment */
+  position: relative;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 40px; /* Match the li height */
+  border-radius: 20px; /* Rounded corners like buttons */
 }
 
-.navbar-links a:hover {
+.nav-link span {
+  position: relative;
+  z-index: 1;
+}
+
+.nav-link::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  background: linear-gradient(135deg, #00bcd4, #4fc3f7);
+  transition: width 0.3s ease;
+}
+
+.nav-link:hover {
   color: #00bcd4;
+}
+
+.nav-link:hover::before {
+  width: 80%;
+}
+
+/* User Info */
+.user-info {
+  display: flex;
+  align-items: center;
+  height: 40px; /* Match other nav items */
+}
+
+.user-greeting {
+  color: #00bcd4;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 188, 212, 0.1);
+  border-radius: 20px;
+  border: 1px solid rgba(0, 188, 212, 0.2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+/* Sign In Link - Fixed with higher specificity and !important */
+.signin-link,
+.navbar .signin-link,
+.navbar-links .signin-link,
+a.signin-link {
+  text-align: center;
+  color: #00bcd4 !important;
+  font-weight: 600;
+  margin-top: 0 !important; /* Force remove any margin-top */
+  margin: 0 !important; /* Remove all margins */
+  padding: 0.5rem 1rem; /* Add padding instead for spacing */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px; /* Match other nav items */
+  min-height: 40px;
+  border-radius: 20px;
+  transition: all 0.3s ease;
+}
+
+/* Sign Up & Logout Buttons */
+.signup-btn,
+.logout-btn {
+  background: linear-gradient(135deg, #00bcd4, #4fc3f7);
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px; /* Match nav-link border radius */
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 15px rgba(0, 188, 212, 0.2);
+  position: relative;
+  overflow: hidden;
+  height: 40px; /* Fixed height to match nav items */
+  min-height: 40px;
+  white-space: nowrap;
+}
+
+.signup-btn::before,
+.logout-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #4fc3f7, #00bcd4);
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.signup-btn:hover::before,
+.logout-btn:hover::before {
+  left: 0;
+}
+
+.signup-btn:hover,
+.logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 188, 212, 0.4);
 }
 
 .logout-btn {
   background: transparent;
-  border: 1px solid #00bcd4;
+  border: 2px solid #00bcd4;
   color: #00bcd4;
-  padding: 0.6rem 1.2rem; /* Adjust padding to match new font size */
-  border-radius: 5px;
-  font-size: 1.2rem; /* Increased font size */
-  cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  box-shadow: none;
 }
 
 .logout-btn:hover {
   background: #00bcd4;
-  color: #1a1a1a;
+  color: #fff;
+}
+
+/* Mobile Menu Button */
+.mobile-menu-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 30px;
+  height: 20px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+}
+
+.hamburger-line {
+  width: 100%;
+  height: 2px;
+  background: #fff;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 2px;
+}
+
+.mobile-menu-btn-open .hamburger-line:nth-child(1) {
+  transform: rotate(45deg) translate(5px, 5px);
+}
+
+.mobile-menu-btn-open .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+.mobile-menu-btn-open .hamburger-line:nth-child(3) {
+  transform: rotate(-45deg) translate(7px, -6px);
+}
+
+/* Mobile Menu Overlay */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(5px);
+  z-index: 999;
+  display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  body {
+    padding-top: 70px !important; /* Adjusted for mobile navbar height */
+  }
+
+  .navbar {
+    padding: 1rem 1.5rem;
+  }
+
+  .navbar-scrolled {
+    padding: 0.75rem 1.5rem;
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
+  }
+
+  /* Hide pulse animation and heart on mobile for better performance */
+  .pulse-container,
+  .heart-container {
+    display: none;
+  }
+
+  .navbar-links {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    height: 100vh;
+    width: 300px;
+    max-width: 80vw;
+    background: rgba(26, 26, 26, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 6rem 2rem 2rem;
+    gap: 1.5rem;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .navbar-links-open {
+    right: 0;
+  }
+
+  .navbar-links li {
+    width: 100%;
+  }
+
+  .nav-link {
+    padding: 1rem 0;
+    font-size: 1.1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .nav-link:last-child {
+    border-bottom: none;
+  }
+
+  .user-greeting {
+    text-align: center;
+    max-width: none;
+    margin: 0.5rem 0;
+  }
+
+  .signup-btn,
+  .logout-btn {
+    width: 100%;
+    margin-top: 1rem;
+    padding: 1rem;
+    font-size: 1rem;
+  }
+
+  .logo-text {
+    font-size: 1.5rem;
+  }
+
+  /* Mobile specific signin-link styles */
+  .signin-link,
+  .navbar .signin-link,
+  .navbar-links .signin-link,
+  a.signin-link {
+    margin-top: 0 !important;
+    margin: 0 !important;
+    padding: 1rem 0;
+    width: 100%;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    padding-top: 65px !important; /* Reduced from 75px to 65px */
+  }
+
+  .navbar {
+    padding: 1rem;
+  }
+
+  .navbar-scrolled {
+    padding: 0.75rem 1rem;
+  }
+
+  .navbar-links {
+    width: 280px;
+    padding: 5rem 1.5rem 2rem;
+  }
+
+  .logo-text {
+    font-size: 1.3rem;
+  }
+
+  /* Smaller pulse container and heart for very small screens */
+  .pulse-container {
+    width: 40px;
+    height: 20px;
+  }
+  
+  .heart-container {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  
+  .pulse-line {
+    animation: none !important;
+  }
+  
+  .heart-icon {
+    animation: none !important;
+  }
+}
+
+/* Focus styles for keyboard navigation - Fixed to remove persistent outline */
+.nav-link:focus,
+.logout-btn:focus,
+.signup-btn:focus,
+.mobile-menu-btn:focus,
+.signin-link:focus {
+  outline: none; /* Remove default outline */
+}
+
+/* Only show focus outline when navigating with keyboard */
+.nav-link:focus-visible,
+.logout-btn:focus-visible,
+.signup-btn:focus-visible,
+.mobile-menu-btn:focus-visible,
+.signin-link:focus-visible {
+  outline: 2px solid #00bcd4;
+  outline-offset: 2px;
+}
+
+/* Remove focus outline on mouse click */
+.nav-link:focus:not(:focus-visible),
+.logout-btn:focus:not(:focus-visible),
+.signup-btn:focus:not(:focus-visible),
+.mobile-menu-btn:focus:not(:focus-visible),
+.signin-link:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Alternative focus style for better UX */
+.nav-link:focus-visible,
+.signin-link:focus-visible {
+  background: rgba(0, 188, 212, 0.1);
+  color: #00bcd4;
+}
+
+.signup-btn:focus-visible,
+.logout-btn:focus-visible {
+  box-shadow: 0 0 0 2px #00bcd4, 0 6px 25px rgba(0, 188, 212, 0.4);
+}
+
+/* Smooth scrolling for anchor links */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Additional fix for main content containers */
+.main-content,
+.container,
+.page-content {
+  margin-top: 0; /* Remove any conflicting margins */
+}
+
+/* Ensure no elements have negative margins that could interfere */
+.hero-section,
+.landing-section,
+.home-section {
+  margin-top: 0;
+}
+
+/* Force override any external stylesheets that might be adding margin-top */
+.signin-link[style*="margin-top"] {
+  margin-top: 0 !important;
+}
+
+/* Additional reset for signin-link to ensure no margins */
+.signin-link {
+  margin: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
 }

@@ -46,10 +46,22 @@ router.post("/forgot-password", async (req, res) => {
   const resetURL = `${REACT_URL}/reset-password/${resetToken}`;
 
   const mailOptions = {
-    from: process.env.OUTLOOK_EMAIL,
+    from: process.env.EMAIL_USER,
     to: user.email,
     subject: "Password Reset Request",
-    text: `Click the link to reset your password: ${resetURL}`,
+    html: `
+    <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px;">
+      <h2>Password Reset Request</h2>
+      <p>If you requested a password reset, click the button below:</p>
+      <a href="${resetURL}" 
+         style="display: inline-block; padding: 10px 20px; font-size: 16px; 
+                color: white; background-color: #007bff; text-decoration: none; 
+                border-radius: 5px; margin-top: 10px;">
+         Reset Password
+      </a>
+      <p style="margin-top: 20px;">If you didn’t request this, you can safely ignore this email.</p>
+    </div>
+  `,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {
@@ -66,7 +78,7 @@ router.post("/forgot-password", async (req, res) => {
 // ========================== RESET PASSWORD ==========================
 router.post("/reset-password/:token", async (req, res) => {
   const { token } = req.params;
-  const { newPassword } = req.body;
+  const { password } = req.body;
 
   try {
     // Find user with the given reset token
@@ -74,6 +86,8 @@ router.post("/reset-password/:token", async (req, res) => {
       resetToken: token,
       resetTokenExpires: { $gt: Date.now() }, // Ensure token is not expired
     });
+
+    console.log(res);
 
     if (!user) {
       return res
@@ -83,7 +97,7 @@ router.post("/reset-password/:token", async (req, res) => {
 
     // Hash the new password
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = await bcrypt.hash(password, salt);
 
     // Clear reset token fields
     user.resetToken = undefined;
