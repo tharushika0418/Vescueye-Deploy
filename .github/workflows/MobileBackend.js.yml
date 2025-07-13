@@ -1,4 +1,4 @@
-name: Deploy to EC2
+name: Deploy to EC2 with PM2
 on:
   push:
     branches: [ main ]
@@ -16,31 +16,31 @@ jobs:
         cd code/mobile-app/Backend
         npm ci
     
-    - name: Stop existing app
+    - name: Install PM2 globally
       run: |
-        sudo pkill -f "node.*server.js" || true
-        sudo lsof -ti:5001 | sudo xargs kill -9 || true
-        sleep 3
+        npm install -g pm2 || sudo npm install -g pm2
     
-    - name: Start application
+    - name: Stop existing application
       run: |
         cd code/mobile-app/Backend
-        nohup npm start > app.log 2>&1 &
-        echo $! > app.pid
-        sleep 10
+        pm2 delete backend || echo "No existing app to delete"
+        pm2 kill || echo "No PM2 processes to kill"
+    
+    - name: Start application with PM2
+      run: |
+        cd code/mobile-app/Backend
+        pm2 start server.js --name backend
+        pm2 save
     
     - name: Health check
       run: |
         cd code/mobile-app/Backend
-        if [ -f app.pid ] && ps -p $(cat app.pid) > /dev/null; then
-          echo "✅ Application started successfully"
-          if nc -z localhost 5001; then
-            echo "✅ Port 5001 is accessible"
-          else
-            echo "⚠️  Port check failed but app is running"
-          fi
+        sleep 10
+        if pm2 show backend | grep -q "online"; then
+          echo "✅ Application is running with PM2"
+          pm2 show backend
         else
           echo "❌ Application failed to start"
-          cat app.log
+          pm2 logs backend --lines 50
           exit 1
         fi
