@@ -17,7 +17,7 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '20'
         cache: 'npm'
     
     - name: Navigate to backend directory
@@ -42,16 +42,18 @@ jobs:
     
     - name: Stop existing application
       run: |
-        cd code/mobile-app/Backend
-        pm2 stop Vescueye || true
-        pm2 delete Vescueye || true
+        # Kill any existing node processes
+        sudo pkill -f "node.*server" || true
+        sudo pkill -f "npm.*start" || true
+        # Wait for processes to stop
+        sleep 2
     
     - name: Start application
       run: |
         cd code/mobile-app/Backend
-        mkdir -p logs
-        pm2 start ecosystem.config.js
-        pm2 save
+        # Start the application in the background
+        nohup npm start > app.log 2>&1 &
+        echo $! > app.pid
         
     - name: Wait for application to start
       run: sleep 10
@@ -59,8 +61,31 @@ jobs:
     - name: Health check
       run: |
         cd code/mobile-app/Backend
-        # Check if PM2 process is running
-        pm2 status | grep Vescueye || (echo "PM2 process not running" && exit 1)
+        # Check if process is still running
+        if [ -f app.pid ]; then
+          PID=$(cat app.pid)
+          if ps -p $PID > /dev/null; then
+            echo "Application is running with PID: $PID"
+          else
+            echo "Application process not found"
+            cat app.log
+            exit 1
+          fi
+        else
+          echo "PID file not found"
+          exit 1
+        fi
         
         # Check if the port is accessible
-        curl -f http://localhost:3000/health || curl -f http://localhost:3000 || (echo "Health check failed" && exit 1)
+        for i in {1..5}; do
+          if curl -f http://localhost:3000/health || curl -f http://localhost:3000; then
+            echo "Health check passed"
+            exit 0
+          fi
+          echo "Health check attempt $i failed, retrying..."
+          sleep 2
+        done
+        
+        echo "Health check failed after 5 attempts - check app.log for errors"
+        cat app.log
+        exit 1
