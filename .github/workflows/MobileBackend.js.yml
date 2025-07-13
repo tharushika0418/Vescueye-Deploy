@@ -16,32 +16,31 @@ jobs:
         cd code/mobile-app/Backend
         npm ci
     
-    - name: Install PM2 locally
+    - name: Install PM2 globally
       run: |
-        cd code/mobile-app/Backend
-        npm install pm2 --save-dev
+        sudo npm install -g pm2
     
     - name: Stop existing application
       run: |
         cd code/mobile-app/Backend
-        npx pm2 delete backend || echo "No existing app to delete"
-        npx pm2 kill || echo "No PM2 processes to kill"
+        pm2 delete backend || echo "No existing app to delete"
+        pm2 kill || echo "No PM2 processes to kill"
     
     - name: Start application with PM2
       run: |
         cd code/mobile-app/Backend
-        npx pm2 start server.js --name backend
-        npx pm2 save
+        pm2 start server.js --name backend
+        pm2 save
     
     - name: Health check
       run: |
         cd code/mobile-app/Backend
         sleep 10
-        if npx pm2 show backend | grep -q "online"; then
+        if pm2 show backend | grep -q "online"; then
           echo "✅ Application is running with PM2"
-          npx pm2 show backend
+          pm2 show backend
         else
           echo "❌ Application failed to start"
-          npx pm2 logs backend --lines 50
+          pm2 logs backend --lines 50
           exit 1
         fi
