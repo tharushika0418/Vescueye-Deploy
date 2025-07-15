@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: code/mobile-app/Backend
+        working-directory: code/mobile-app/Backend  # sets context for all run commands here
 
     steps:
       - name: Checkout code
@@ -27,5 +27,22 @@ jobs:
       - name: Recreate .env file from GitHub Secret
         run: echo "${{ secrets.MOBILE_SECRETS }}" > .env
 
+      - name: Create ecosystem.config.js
+        run: |
+          cat > ecosystem.config.js << EOF
+          module.exports = {
+            apps: [{
+              name: "vescueye",
+              script: "server.js",
+              instances: "max",
+              exec_mode: "cluster",
+              env_production: {
+                NODE_ENV: "production",
+                PORT: 5001
+              }
+            }]
+          }
+          EOF
+
       - name: Start or reload app with PM2
-        run: pm2 startOrReload ../../ecosystem.config.js --env production
+        run: pm2 startOrReload ecosystem.config.js --env production
