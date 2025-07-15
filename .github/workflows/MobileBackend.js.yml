@@ -1,9 +1,17 @@
+name: Deploy to EC2 with PM2
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy:
     runs-on: self-hosted
 
     env:
-      PM2_HOME: /home/ubuntu/.pm2   # Set PM2 home globally for the job
+      PM2_HOME: /home/ubuntu/.pm2  # Ensure PM2 home is consistent across steps
+      NODE_ENV: production          # Optional: set node environment
 
     steps:
       - name: Checkout code
@@ -14,15 +22,15 @@ jobs:
           cd code/mobile-app/Backend
           npm ci
 
-      - name: Install PM2 globally
+      - name: Install PM2 globally (no sudo)
         run: |
-          sudo npm install -g pm2
+          npm install -g pm2
 
       - name: Stop existing backend app (if any)
         run: |
           cd code/mobile-app/Backend
           pm2 delete backend || echo "No existing app to delete"
-          pm2 kill || echo "No PM2 processes to kill"
+          # Don't run pm2 kill here
 
       - name: Write .env file from MOBILE_SECRETS secret
         run: |
@@ -37,8 +45,8 @@ jobs:
       - name: Health check backend app
         run: |
           cd code/mobile-app/Backend
-          echo "Waiting 10 seconds for app to start..."
-          sleep 10
+          echo "Waiting 20 seconds for app to start..."
+          sleep 20
           if pm2 show backend | grep -q "online"; then
             echo "✅ Application is running with PM2"
             pm2 show backend
