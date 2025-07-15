@@ -1,4 +1,4 @@
-name: Deploy to EC2 with PM2
+name: Deploy Mobile app
 
 on:
   push:
@@ -31,8 +31,8 @@ jobs:
       - name: Write .env file from MOBILE_SECRETS secret
         run: |
           echo "${{ secrets.MOBILE_SECRETS }}" > code/mobile-app/Backend/.env
-          # Optional: print .env for debug (remove in production!)
-          # cat code/mobile-app/Backend/.env
+        # Optional: uncomment below line for debugging env content (don't do this in production!)
+        # run: cat code/mobile-app/Backend/.env
 
       - name: Start backend with PM2
         run: |
@@ -43,6 +43,7 @@ jobs:
       - name: Health check backend app
         run: |
           cd code/mobile-app/Backend
+          echo "Waiting 10 seconds for app to start..."
           sleep 10
           if pm2 show backend | grep -q "online"; then
             echo "✅ Application is running with PM2"
