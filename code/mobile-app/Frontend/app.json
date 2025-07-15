@@ -3,26 +3,32 @@
     "name": "Vescueye",
     "slug": "Vescueye",
     "version": "1.0.0",
+    "sdkVersion": "53.0.0",
     "orientation": "portrait",
-    "icon": "./assets/vescueye-logo.png",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
-      "image": "./assets/vescueye-logo.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vescueyetestuser.Vescueye",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/vescueye-logo.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.vescueyetestuser.Vescueye"
     },
     "web": {
-      "favicon": "./assets/vescueye-logo.png"
+      "favicon": "./assets/favicon.png"
     },
     "extra": {
       "eas": {

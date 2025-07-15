@@ -10,7 +10,7 @@ require("dotenv").config();
 const Doctor = require("../models/Doctor");
 const Patient = require("../models/Patient");
 const { error } = require("console");
-const REACT_URL = process.env.REACT_APP_URL;
+const REACT_URL = process.env.REACT_APP_URL || "http://localhost:3000";
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -119,16 +119,8 @@ router.post(
   [
     body("email").isEmail().withMessage("Enter a valid email").normalizeEmail(),
     body("password")
-      .isLength({ min: 8 })
-      .withMessage("Password must be at least 8 characters")
-      .matches(/[A-Z]/)
-      .withMessage("Password must contain at least one uppercase letter")
-      .matches(/[a-z]/)
-      .withMessage("Password must contain at least one lowercase letter")
-      .matches(/\d/)
-      .withMessage("Password must contain at least one number")
-      .matches(/[@$!%*?&#]/)
-      .withMessage("Password must contain at least one special character"),
+      .isLength({ min: 6 })
+      .withMessage("Password must be at least 6 characters"),
     body("role")
       .isIn(["doctor", "patient", "hospital"])
       .withMessage("Invalid role"),

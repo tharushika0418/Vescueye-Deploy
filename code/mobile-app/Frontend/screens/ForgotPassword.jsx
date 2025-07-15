@@ -1,171 +1,243 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
-  TouchableWithoutFeedback, Keyboard, Image
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Alert, 
+  ActivityIndicator, 
+  KeyboardAvoidingView,
+  Platform 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+
+  // Email validation function
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
 
   const handleResetPassword = async () => {
-    if (!email) {
+    // Validation
+    if (!email.trim()) {
       Alert.alert("Error", "Please enter your email address.");
+      return;
+    }
+
+    if (!validateEmail(email.trim())) {
+      Alert.alert("Error", "Please enter a valid email address.");
       return;
     }
 
     setLoading(true);
     try {
+      // Fixed URL (removed extra slash)
       const response = await fetch('http://172.20.10.6:5001/api/auth/forgot-password', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        headers: { 
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
       });
 
       const data = await response.json();
+      
       if (response.ok) {
+        setEmailSent(true);
         Alert.alert(
-          "Email Sent",
-          "Check your email for the reset token, then tap 'Continue' to enter it.",
+          "Success", 
+          "If an account with this email exists, you will receive a password reset link shortly.",
           [
             {
-              text: "Continue",
-              onPress: () => navigation.navigate('ResetPassword')
+              text: "OK",
+              onPress: () => {
+                setEmail('');
+                // Optionally navigate back after success
+                // navigation.goBack();
+              }
             }
           ]
         );
-        setEmail('');
       } else {
-        Alert.alert("Error", data.message || "Failed to send reset email.");
+        Alert.alert("Error", data.message || "Failed to send reset link. Please try again.");
       }
     } catch (error) {
-      Alert.alert("Error", "Something went wrong. Please try again.");
+      console.error('Forgot password error:', error);
+      Alert.alert(
+        "Network Error", 
+        "Unable to connect to the server. Please check your internet connection and try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleTryAgain = () => {
+    setEmailSent(false);
+    setEmail('');
+  };
+
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
+    <KeyboardAvoidingView 
+      style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.innerContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color="#fff" />
-          </TouchableOpacity>
+      <View style={styles.content}>
+        <Text style={styles.title}>Forgot Password</Text>
+        
+        {!emailSent ? (
+          <>
+            <Text style={styles.subtitle}>
+              Enter your email address and we'll send you a link to reset your password.
+            </Text>
+            
+            <TextInput
+              style={[styles.input, !validateEmail(email) && email.length > 0 && styles.inputError]}
+              placeholder="Enter your email address"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              editable={!loading}
+            />
 
-          <Image source={require('../assets/vescueye-logo.png')} style={styles.logo} />
-          <Text style={styles.header}>Forgot Password</Text>
+            <TouchableOpacity 
+              style={[styles.button, loading && styles.buttonDisabled]} 
+              onPress={handleResetPassword} 
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="white" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Send Reset Link</Text>
+              )}
+            </TouchableOpacity>
+          </>
+        ) : (
+          <View style={styles.successContainer}>
+            <Text style={styles.successIcon}>✉️</Text>
+            <Text style={styles.successTitle}>Check Your Email</Text>
+            <Text style={styles.successText}>
+              We've sent password reset instructions to your email address.
+            </Text>
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleTryAgain}>
+              <Text style={styles.secondaryButtonText}>Try Another Email</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
-          <Text style={styles.instruction}>
-            Enter your email and we’ll send a reset token to your inbox.
-          </Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            placeholderTextColor="rgba(255, 255, 255, 0.7)"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleResetPassword}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Send Reset Token</Text>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('ResetPassword')}>
-            <Text style={styles.linkText}>Already have a reset token?</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableWithoutFeedback>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => navigation.goBack()}
+          disabled={loading}
+        >
+          <Text style={styles.backButtonText}>← Back to Login</Text>
+        </TouchableOpacity>
+      </View>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#465a6e',
+  container: { 
+    flex: 1, 
+    backgroundColor: '#f8f9fa' 
   },
-  innerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+  content: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    padding: 20 
   },
-  backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
+  title: { 
+    fontSize: 28, 
+    fontWeight: 'bold', 
+    marginBottom: 10,
+    color: '#333'
   },
-  logo: {
-    width: 120,
-    height: 120,
-    marginBottom: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 20,
-  },
-  instruction: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.7)',
+  subtitle: {
+    fontSize: 16,
+    color: '#666',
     textAlign: 'center',
+    marginBottom: 30,
+    lineHeight: 22
+  },
+  input: { 
+    width: '100%', 
+    padding: 15, 
+    borderWidth: 1, 
+    borderColor: '#ddd', 
+    borderRadius: 8, 
     marginBottom: 20,
-    lineHeight: 20,
-    paddingHorizontal: 10,
+    backgroundColor: 'white',
+    fontSize: 16
   },
-  input: {
-    height: 40,
-    width: '80%',
-    borderColor: 'rgba(255,255,255,0.5)',
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    marginBottom: 15,
-    color: '#fff',
-    backgroundColor: 'transparent',
+  inputError: {
+    borderColor: '#dc3545'
   },
-  button: {
-    width: '80%',
-    backgroundColor: '#10e0f8',
-    paddingVertical: 12,
-    borderRadius: 10,
+  button: { 
+    width: '100%', 
+    backgroundColor: '#007bff', 
+    padding: 15, 
+    borderRadius: 8, 
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 20
   },
   buttonDisabled: {
-    backgroundColor: '#aaa',
+    backgroundColor: '#6c757d'
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
+  buttonText: { 
+    color: 'white', 
+    fontSize: 16, 
+    fontWeight: '600' 
+  },
+  backButton: { 
+    padding: 10 
+  },
+  backButtonText: { 
+    color: '#007bff', 
+    fontSize: 16 
+  },
+  successContainer: {
+    alignItems: 'center',
+    marginBottom: 30
+  },
+  successIcon: {
+    fontSize: 50,
+    marginBottom: 20
+  },
+  successTitle: {
+    fontSize: 24,
     fontWeight: 'bold',
+    marginBottom: 15,
+    color: '#333'
   },
-  linkButton: {
-    marginTop: 15,
+  successText: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 30
   },
-  linkText: {
-    color: '#fff',
-    fontSize: 14,
-    textDecorationLine: 'underline',
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: '#007bff',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8
   },
+  secondaryButtonText: {
+    color: '#007bff',
+    fontSize: 16,
+    fontWeight: '600'
+  }
 });
 
 export default ForgotPassword;

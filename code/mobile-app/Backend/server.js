@@ -3,12 +3,16 @@ const express = require('express');
 const mongoose = require('mongoose');
 const { wss } = require("./controller/awsIotHandler");
 const cors = require('cors');
+
+// Route imports
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/userRoutes');
+const abnormalityRoutes = require('./routes/abnormalityRoutes'); // Abnormality route
+const pushTokenRoutes = require('./routes/pushTokenRoutes');       // Push token route
 
 const app = express();
 
-const MONGO_URI = process.env.MONGO_URI ; 
+const MONGO_URI = process.env.MONGO_URI; 
 const PORT = process.env.PORT || 5001;
 
 // Middleware
@@ -18,7 +22,8 @@ app.use(cors());
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
-// app.use('/api/users/flap/search/:id', getFlapByPatientId);
+app.use('/api', abnormalityRoutes);    // Mount abnormality routes at /api/
+app.use('/api', pushTokenRoutes);      // Mount push token routes at /api/
 
 // MongoDB connection setup
 mongoose.connect(MONGO_URI, {

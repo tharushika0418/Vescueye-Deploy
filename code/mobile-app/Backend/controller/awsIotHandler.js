@@ -1,8 +1,9 @@
+const FlapData = require("../models/FlapData");
 const awsIot = require("aws-iot-device-sdk");
-const WebSocket = require("ws"); // WebSocket server for mobile app
+const WebSocket = require("ws");
+const { sendAbnormalityNotification } = require("./notificationService");
 require("dotenv").config();
 
-// WebSocket Server Setup
 const wss = new WebSocket.Server({ port: 8080 });
 
 wss.on("connection", (ws) => {
@@ -10,7 +11,6 @@ wss.on("connection", (ws) => {
   ws.send(JSON.stringify({ message: "Connected to real-time updates" }));
 });
 
-// AWS IoT Configuration
 const device = awsIot.device({
   keyPath: process.env.AWS_IOT_PRIVATE_KEY || "/home/ubuntu/certs/privateKey.pem",
   certPath: process.env.AWS_IOT_CERTIFICATE || "/home/ubuntu/certs/certificate.pem",
@@ -30,27 +30,50 @@ device.on("connect", () => {
   });
 });
 
-device.on("message", (topic, payload) => {
+device.on("message", async (topic, payload) => {
   try {
     const data = JSON.parse(payload.toString());
-    const { patient_id, image_url, temperature } = data;
+    const { patient_id, image_url, temperature, vein_percentage,continuity_score } = data;
+    // const abnormal = vein_percentage < 80 || continuity_score < 7;
+    const abnormal = continuity_score < 8;
+    console.log("Abnormality Check:", abnormal);
+    console.log("🔹 Received Data:", data);
 
-    console.log("🔹 Received Data:", data); // Display received data in console
+    // Save data to MongoDB
+    const flapData = new FlapData({
+      patient_id,
+      image_url,
+      temperature
+    });
+    // await flapData.save();
 
-    // Notify WebSocket clients (mobile app)
+    // Broadcast to WebSocket clients
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(JSON.stringify({ patient_id, image_url, temperature }));
       }
     });
 
-    // Send response back to AWS IoT device
+    // Trigger push notification if abnormality detected
+    if (temperature <= 30 || abnormal === true) {
+      console.log("Abnormality detected, sending push notification...");
+      try {
+        await sendAbnormalityNotification("yes");
+      } catch (notifyError) {
+        console.error("Notification error:", notifyError);
+      }
+    }
+
     device.publish(
       "sensor/response",
-      JSON.stringify({ status: "success", message: "Data received and displayed" })
+      JSON.stringify({ status: "success", message: "Data received and processed" })
     );
   } catch (error) {
     console.error("❌ Error processing MQTT message:", error);
+    device.publish(
+      "sensor/response",
+      JSON.stringify({ status: "error", message: "Invalid JSON format" })
+    );
   }
 });
 

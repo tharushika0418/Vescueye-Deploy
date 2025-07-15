@@ -613,4 +613,28 @@
     margin: 0;
     flex: 1;
   }
+
+  .password-strength {
+    margin: 5px 0;
+    font-size: 0.9rem;
+  }
+
+  .strength-weak {
+    color: red;
+  }
+
+  .strength-medium {
+    color: orange;
+  }
+
+  .strength-strong {
+    color: green;
+  }
+
+  .password-feedback {
+    margin-top: 5px;
+    padding-left: 20px;
+    color: #aa0000;
+    font-size: 0.85rem;
+  }
 }

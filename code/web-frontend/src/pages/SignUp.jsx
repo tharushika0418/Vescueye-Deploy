@@ -4,6 +4,27 @@ import { AuthContext } from "../context/AuthContext";
 import "../styles/Auth.css";
 import vescueyeLogo from "../assets/vescueye-logo.png";
 
+// Password strength checker helper
+const getPasswordStrength = (password) => {
+  const criteria = [
+    { regex: /.{8,}/, message: "At least 8 characters" },
+    { regex: /[A-Z]/, message: "One uppercase letter" },
+    { regex: /\d/, message: "One number" },
+    { regex: /[@$!%*?&#]/, message: "One special character" },
+  ];
+
+  const passed = criteria.filter((c) => c.regex.test(password));
+  const failedMessages = criteria
+    .filter((c) => !c.regex.test(password))
+    .map((c) => c.message);
+
+  let strength = "Weak";
+  if (passed.length >= 3) strength = "Medium";
+  if (passed.length === 4) strength = "Strong";
+
+  return { strength, failedMessages };
+};
+
 const Signup = () => {
   const navigate = useNavigate();
   const { signup, user } = useContext(AuthContext);
@@ -12,11 +33,12 @@ const Signup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
-
-  // State to manage input type for dateOfBirth
   const [dobInputType, setDobInputType] = useState("text");
+  const [passwordStrength, setPasswordStrength] = useState({
+    strength: "",
+    failedMessages: [],
+  });
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       navigate(`/${user.role}-dashboard`);
@@ -53,13 +75,24 @@ const Signup = () => {
   const handleChange = useCallback(
     (e) => {
       const { name, value } = e.target;
-      setFormData((prev) => ({
-        ...prev,
-        [activeTab]: {
-          ...prev[activeTab],
-          [name]: value,
-        },
-      }));
+      setFormData((prev) => {
+        const updated = {
+          ...prev,
+          [activeTab]: {
+            ...prev[activeTab],
+            [name]: value,
+          },
+        };
+
+        // Password strength update
+        if (name === "password") {
+          const { strength, failedMessages } = getPasswordStrength(value);
+          setPasswordStrength({ strength, failedMessages });
+        }
+
+        return updated;
+      });
+
       if (error) setError(null);
     },
     [activeTab, error]
@@ -95,9 +128,6 @@ const Signup = () => {
     if (data.password !== data.confirmPassword) {
       errors.push("Passwords do not match.");
     }
-    if (data.password.length < 6) {
-      errors.push("Password must be at least 6 characters long.");
-    }
 
     if (data.telephone && !/^\d{10}$/.test(data.telephone)) {
       errors.push("Telephone number must be 10 digits.");
@@ -120,8 +150,15 @@ const Signup = () => {
       }
     }
 
-    if (activeTab === "doctor") {
-      if (!data.speciality) errors.push("Speciality is required.");
+    if (data.password) {
+      const { failedMessages } = getPasswordStrength(data.password);
+      if (failedMessages.length > 0) {
+        errors.push("Password is too weak. " + failedMessages.join(", "));
+      }
+    }
+
+    if (activeTab === "doctor" && !data.speciality) {
+      errors.push("Speciality is required.");
     }
 
     return errors;
@@ -142,7 +179,6 @@ const Signup = () => {
 
       try {
         const res = await signup(formData[activeTab]);
-
         if (res.success) {
           navigate(`/${activeTab}-dashboard`);
         } else {
@@ -157,21 +193,19 @@ const Signup = () => {
     [formData, activeTab, signup, navigate, validateForm]
   );
 
-  const getInputFieldType = useCallback((field) => {
-    if (field.includes("password")) {
-      return showPassword ? "text" : "password";
-    }
-    if (field === "email") return "email";
-    if (field === "telephone" || field === "nic") return "text";
-    // dateOfBirth type is now handled by dobInputType state
-    return "text";
-  }, [showPassword]);
+  const getInputFieldType = useCallback(
+    (field) => {
+      if (field.includes("password")) {
+        return showPassword ? "text" : "password";
+      }
+      if (field === "email") return "email";
+      if (field === "telephone" || field === "nic") return "text";
+      return "text";
+    },
+    [showPassword]
+  );
 
-  // Modified to return empty string for all icons
-  const getInputFieldIcon = useCallback((field) => {
-    return ""; // No emoji icons
-  }, []);
-
+  const getInputFieldIcon = useCallback(() => "", []);
   const getFieldLabel = useCallback((field) => {
     switch (field) {
       case "firstName":
@@ -179,7 +213,7 @@ const Signup = () => {
       case "lastName":
         return "Last Name";
       case "dateOfBirth":
-        return "Date of Birth"; 
+        return "Date of Birth";
       case "telephone":
         return "Telephone Number";
       case "nic":
@@ -210,7 +244,6 @@ const Signup = () => {
       </div>
 
       <div className="auth-container">
-        {/* Logo Section */}
         <div className="auth-header">
           <div className="logo-container">
             <img src={vescueyeLogo} alt="Vescueye Logo" className="auth-logo" />
@@ -219,7 +252,6 @@ const Signup = () => {
           <p className="auth-subtitle2">Join us today!</p>
         </div>
 
-        {/* Tabs */}
         <div className="auth-tabs">
           {["patient", "doctor"].map((role) => (
             <button
@@ -229,7 +261,6 @@ const Signup = () => {
                 setActiveTab(role);
                 setError(null);
                 setFocusedField(null);
-                // Reset dobInputType when switching tabs
                 setDobInputType("text");
               }}
             >
@@ -238,7 +269,6 @@ const Signup = () => {
           ))}
         </div>
 
-        {/* Error Message */}
         {error && (
           <div className="error-container">
             <div className="error-icon">⚠️</div>
@@ -246,13 +276,11 @@ const Signup = () => {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit} className="auth-form">
           {Object.entries(formData[activeTab]).map(([field, value]) => {
             if (field === "role") return null;
-
-            // Use dobInputType for dateOfBirth field, otherwise use getInputFieldType
-            const currentInputType = field === "dateOfBirth" ? dobInputType : getInputFieldType(field);
+            const currentInputType =
+              field === "dateOfBirth" ? dobInputType : getInputFieldType(field);
             const inputIcon = getInputFieldIcon(field);
             const fieldLabel = getFieldLabel(field);
             const hasIcon = !!inputIcon;
@@ -260,13 +288,28 @@ const Signup = () => {
             return (
               <div
                 key={field}
-                className={`input-group ${focusedField === field ? "focused" : ""} ${value ? "filled" : ""}`}
+                className={`input-group ${
+                  focusedField === field ? "focused" : ""
+                } ${value ? "filled" : ""}`}
               >
-                {/* Floating label only for non-date fields where it makes sense */}
-                {field !== 'dateOfBirth' && (
+                {field !== "dateOfBirth" && (
                   <label htmlFor={field} className="floating-label">
                     {fieldLabel}
                   </label>
+                )}
+                {field === "password" && value && (
+                  <div
+                    className={`password-strength strength-${passwordStrength.strength.toLowerCase()}`}
+                  >
+                    Strength: <strong>{passwordStrength.strength}</strong>
+                    {passwordStrength.failedMessages.length > 0 && (
+                      <ul className="password-feedback">
+                        {passwordStrength.failedMessages.map((msg, idx) => (
+                          <li key={idx}>{msg}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 )}
                 <div className="input-wrapper">
                   {hasIcon && <span className="input-icon">{inputIcon}</span>}
@@ -277,7 +320,7 @@ const Signup = () => {
                       value={value}
                       onChange={handleChange}
                       onFocus={() => handleFocus(field)}
-                      onBlur={() => handleBlur(field)} // No value needed for select blur
+                      onBlur={() => handleBlur(field)}
                       required
                       className={`auth-input ${!hasIcon ? "no-icon" : ""}`}
                     >
@@ -289,19 +332,28 @@ const Signup = () => {
                     </select>
                   ) : (
                     <input
-                      type={currentInputType} // Use currentInputType
+                      type={currentInputType}
                       id={field}
                       name={field}
                       value={value}
                       onChange={handleChange}
                       onFocus={() => handleFocus(field)}
-                      onBlur={() => handleBlur(field, value)} // Pass value to handleBlur
+                      onBlur={() => handleBlur(field, value)}
                       required
                       className={`auth-input ${!hasIcon ? "no-icon" : ""}`}
-                      autoComplete={field.includes("password") ? "new-password" : "off"}
-                      max={field === "dateOfBirth" ? new Date().toISOString().split("T")[0] : undefined}
-                      // Placeholder for dateOfBirth when type is text
-                      placeholder={field === "dateOfBirth" && dobInputType === "text" ? "      Date of Birth (MM-DD-YYYY)" : ""}
+                      autoComplete={
+                        field.includes("password") ? "new-password" : "off"
+                      }
+                      max={
+                        field === "dateOfBirth"
+                          ? new Date().toISOString().split("T")[0]
+                          : undefined
+                      }
+                      placeholder={
+                        field === "dateOfBirth" && dobInputType === "text"
+                          ? "      Date of Birth (MM-DD-YYYY)"
+                          : ""
+                      }
                     />
                   )}
                   {field.includes("password") && (
@@ -309,9 +361,10 @@ const Signup = () => {
                       type="button"
                       className="password-toggle"
                       onClick={() => setShowPassword(!showPassword)}
-                      aria-label={showPassword ? "Hide password" : "Show password"}
-                    >
-                    </button>
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    ></button>
                   )}
                 </div>
               </div>
@@ -341,12 +394,13 @@ const Signup = () => {
             {isLoading ? (
               <div className="loading-spinner"></div>
             ) : (
-              `Sign Up as ${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}`
+              `Sign Up as ${
+                activeTab.charAt(0).toUpperCase() + activeTab.slice(1)
+              }`
             )}
           </button>
         </form>
 
-        {/* Footer */}
         <div className="auth-footer">
           <p>
             Already have an account?{" "}

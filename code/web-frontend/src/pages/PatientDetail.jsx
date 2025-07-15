@@ -16,49 +16,49 @@ function PatientDetail() {
   const { id } = useParams();
   const [flapData, setFlapData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [patientData, setPatientData] = useState({});
+  const [error, setError] = useState(null);
+  const [patientData, setPatientData] = useState({
+    name: "",
+    age: "",
+    gender: "",
+    address: "",
+  });
   const token = localStorage.getItem("token");
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+
   useEffect(() => {
-    const fetchFlapData = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${API_URL}/users/flap/search/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setFlapData(response.data.records || []);
-        setLoading(false);
+        const [flapRes, patientRes] = await Promise.all([
+          axios.get(`${API_URL}/users/flap/search/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${API_URL}/users/patient/${id}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
+
+        setFlapData(flapRes.data.records || []);
+        setPatientData(patientRes.data || {});
       } catch (err) {
-        console.error("Failed to fetch flap data", err);
-        setLoading(false);
+        console.error("Failed to fetch data", err);
+        setError("Failed to load data. Please try again later.");
+      } finally {
+        setLoading(false); // Only set to false after both have completed (success or fail)
       }
     };
 
-    const fetchPatientData = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/users/patient/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setPatientData(response.data || []);
-      } catch (err) {
-        console.error("Failed to fetch patient data", err);
-      }
-    };
-
-    fetchPatientData();
-    fetchFlapData();
+    fetchData();
   }, [id]);
 
+  // Prepare data for the graph
   const graphData = flapData.map((f) => ({
     time: new Date(f.timestamp).toLocaleString(),
     temp: f.temperature,
   }));
 
   if (loading) return <CircularProgress />;
-
+  if (error) return <Typography color="error">{error}</Typography>;
   return (
     <Box p={3}>
       <Typography variant="h5" mb={2} align="center">
@@ -128,7 +128,10 @@ function PatientDetail() {
               {new Date(f.timestamp).toLocaleString()}
             </Typography>
             <Typography variant="body2">
-              Temperature: {f.temperature.toFixed(2)} °C
+              Temperature:{" "}
+              {typeof f.temperature === "number"
+                ? f.temperature.toFixed(2) + " °C"
+                : "N/A"}
             </Typography>
           </Box>
         ))}

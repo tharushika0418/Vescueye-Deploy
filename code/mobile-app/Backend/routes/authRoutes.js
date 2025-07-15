@@ -4,13 +4,12 @@ const { forgotPassword, resetPassword } = require("../controller/passwordControl
 
 const router = express.Router();
 
-// Authentication Routes
+// Authentication routes
 router.post("/signup", create);
 router.post("/login", login);
 
-// Password Reset Routes
+// Password reset routes
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password/:token", resetPassword);
-
 
 module.exports = router;

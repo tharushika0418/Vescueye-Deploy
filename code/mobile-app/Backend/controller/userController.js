@@ -1,291 +1,514 @@
-/*require("dotenv").config();  // Load environment variables
-
 const User = require("../models/User");
-const FlapData = require("../models/FlapData");
-const bcrypt = require("bcryptjs");  // For password hashing
-const jwt = require("jsonwebtoken"); // For JWT authentication
+const Patient = require("../models/Patient.js");
+const Doctor = require("../models/Doctor.js");
+const FlapData = require("../models/FlapData.js");
+const bcrypt = require("bcryptjs"); // Add this for password hashing
+const jwt = require("jsonwebtoken"); // Add this for JWT tokens
 
-const JWT_SECRET = process.env.JWT_SECRET;  // Get JWT secret from environment variables
+// Authentication Functions
+// Create user (signup)
+exports.create = async (req, res) => {
+  try {
+    const { username, email, password, role } = req.body;
 
-// User registration function
-const create = async (req, res) => {
-    try {
-        const { full_name, email, password, role } = req.body;
-
-        // Check if the user already exists
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: "User already exists." });
-        }
-
-        // Hash password before saving
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create and save new user with hashed password
-        const user = new User({ full_name, email, password: hashedPassword, role });
-        const saveData = await user.save();
-
-        res.status(201).json({ message: "User registered successfully", user: saveData });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Validate required fields
+    if (!username || !email || !password || !role) {
+      return res.status(400).json({ 
+        success: false,
+        message: "All fields are required" 
+      });
     }
-};
 
-// User login function (Restricted to doctors only)
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        // Restrict login to only doctors
-        if (user.role !== "doctor") {
-            return res.status(403).json({ message: "Access denied. Only doctors can log in." });
-        }
-
-        // Validate password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
-
-        // Generate JWT token
-        const token = jwt.sign(
-            { userId: user._id, role: user.role },
-            JWT_SECRET,  
-            { expiresIn: "1h" }
-        );
-
-        res.status(200).json({
-            message: "Login successful",
-            token,
-            user: { id: user._id, full_name: user.full_name, email: user.email, role: user.role }
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Invalid email format" 
+      });
     }
-};
 
-// Get Flap Data by Patient ID
-const getFlapByPatientId = async (req, res) => {
-    try {
-      const { id } = req.params; // Extract patient ID from request parameters
-  
-      // Validate if ID is a valid MongoDB ObjectId
-      if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-        return res.status(400).json({ error: "Invalid Patient ID format." });
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [{ email }, { username }] 
+    });
+    
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false,
+        message: "User with this email or username already exists" 
+      });
+    }
+
+    // Hash password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create new user
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+      role
+    });
+
+    await newUser.save();
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: newUser._id, 
+        email: newUser.email, 
+        role: newUser.role 
+      },
+      process.env.JWT_SECRET || "your_jwt_secret_key",
+      { expiresIn: "24h" }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "User created successfully",
+      token,
+      user: {
+        id: newUser._id,
+        username: newUser.username,
+        email: newUser.email,
+        role: newUser.role
       }
-  
-      // Fetch all flap records for the patient
-      const flapRecords = await FlapData.find({ patient_id: id })
-        .populate("patient_id", "name age contact") // Include patient details
-        .sort({ timestamp: -1 }) // Sort by latest entry
-  
-      if (!flapRecords || flapRecords.length === 0) {
-        return res.status(404).json({ error: "No flap data found for this patient." });
+    });
+
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error creating user", 
+      error: error.message 
+    });
+  }
+};
+
+// Login user
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Email and password are required" 
+      });
+    }
+
+    // Find user by email
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid email or password" 
+      });
+    }
+
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ 
+        success: false,
+        message: "Invalid email or password" 
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        email: user.email, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || "your_jwt_secret_key",
+      { expiresIn: "24h" }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        role: user.role
       }
-  
-      res.status(200).json(flapRecords);
-    } catch (error) {
-      console.error("Error fetching flap data:", error);
-      res.status(500).json({ error: "Server error", details: error.message });
+    });
+
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error during login", 
+      error: error.message 
+    });
+  }
+};
+
+// Get all doctors
+exports.getDoctors = async (req, res) => {
+  try {
+    const doctors = await Doctor.find(); // Fetch from Doctor model
+    res.status(200).json(doctors);
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
+
+// Get all patients
+exports.getPatients = async (req, res) => {
+  try {
+    const patients = await Patient.find(); // Fetch from Patient model
+    res.status(200).json(patients);
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
+
+// Get a specific patient by ID
+exports.getPatientById = async (req, res) => {
+  try {
+    const patient = await Patient.findOne({
+      _id: req.params.id,
+    }).select("-password");
+    if (!patient) {
+      return res.status(404).json({ error: "Patient not found" });
     }
-  };
-  const Doctor = require("../models/Doctor");
-  const Patient = require("../models/Patient");
-  
-  // Get Assigned Patients for a Doctor by Email
-  const getAssignPatients = async (req, res) => {
-      try {
-          const { email } = req.body; // Extract doctor email from request body
-  
-          // Validate email
-          if (!email) {
-              return res.status(400).json({ error: "Doctor email is required." });
-          }
-  
-          // Find the doctor by email
-          const doctor = await Doctor.findOne({ email });
-          if (!doctor) {
-              return res.status(404).json({ error: "Doctor not found." });
-          }
-  
-          // Fetch all patients assigned to this doctor
-          const assignedPatients = await Patient.find({ assignedDoctor: doctor._id });
-  
-          if (!assignedPatients || assignedPatients.length === 0) {
-              return res.status(404).json({ error: "No assigned patients found for this doctor." });
-          }
-  
-          res.status(200).json(assignedPatients);
-      } catch (error) {
-          console.error("Error fetching assigned patients:", error);
-          res.status(500).json({ error: "Server error", details: error.message });
+    res.status(200).json(patient);
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};
+
+//Register patient
+exports.registerPatient = async (req, res) => {
+  try {
+    const { name, age, address, contact, medicalHistory, gender } = req.body;
+
+    // Validate contact number (must be 10 digits)
+    if (!/^\d{10}$/.test(contact)) {
+      return res
+        .status(400)
+        .json({ message: "Contact number must be exactly 10 digits" });
+    }
+
+    // Create new patient
+    const newPatient = new Patient({
+      name,
+      age,
+      address,
+      contact,
+      medicalHistory,
+      gender,
+    });
+
+    // Save to database
+    await newPatient.save();
+
+    res.status(201).json({
+      message: "Patient registered successfully",
+      patient: newPatient,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error registering patient", error: error.message });
+  }
+};
+
+exports.registerDoctor = async (req, res) => {
+  try {
+    const { name, email, specialty, contact, age } = req.body;
+
+    // Validate all required fields
+    if (!name || !email || !specialty || !contact) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Validate contact number (must be 10 digits)
+    if (!/^\d{10}$/.test(contact)) {
+      return res
+        .status(400)
+        .json({ message: "Contact number must be exactly 10 digits" });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: "Invalid email format" });
+    }
+
+    // Check if doctor with the same email already exists
+    const existingDoctor = await Doctor.findOne({ email });
+    if (existingDoctor) {
+      return res
+        .status(400)
+        .json({ message: "Doctor with this email already exists" });
+    }
+
+    // Create new doctor
+    const newDoctor = new Doctor({ name, email, specialty, contact, age });
+
+    // Save to database
+    await newDoctor.save();
+
+    res
+      .status(201)
+      .json({ message: "Doctor registered successfully", doctor: newDoctor });
+  } catch (error) {
+    console.error("Error registering doctor:", error);
+    res
+      .status(500)
+      .json({ message: "Error registering doctor", error: error.message });
+  }
+};
+
+exports.assignPatientToDoctor = async (req, res) => {
+  try {
+    const { patientId, doctorId } = req.body;
+
+    // Find Patient & Doctor
+    const patient = await Patient.findById(patientId);
+    const doctor = await Doctor.findById(doctorId);
+
+    if (!patient || !doctor) {
+      return res.status(404).json({ error: "Patient or Doctor not found" });
+    }
+
+    // Update Patient's assignedDoctor field
+    patient.assignedDoctor = doctorId;
+
+    // Add Patient to Doctor's assignedPatients array (if not already assigned)
+    if (!doctor.assignedPatients.includes(patientId)) {
+      doctor.assignedPatients.push(patientId);
+    }
+
+    await patient.save();
+    await doctor.save();
+
+    res
+      .status(200)
+      .json({ message: "Patient assigned to doctor successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.searchPatients = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+    // Search patients by name or contact
+    const patients = await Patient.find({
+      $or: [
+        { name: { $regex: query, $options: "i" } }, // Case-insensitive name search
+        { contact: { $regex: query, $options: "i" } }, // Case-insensitive contact search
+      ],
+    });
+
+    res.status(200).json(patients);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error searching patients", error: error.message });
+  }
+};
+
+exports.searchDoctors = async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ message: "Search query is required" });
+    }
+    // Search doctors by name or contact or email
+    const doctors = await Doctor.find({
+      $or: [
+        { name: { $regex: query, $options: "i" } }, // Case-insensitive name search
+        { contact: { $regex: query, $options: "i" } }, // Case-insensitive contact search
+        { email: { $regex: query, $options: "i" } }, // Case-insensitive email search
+      ],
+    });
+
+    res.status(200).json(doctors);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error searching doctors", error: error.message });
+  }
+};
+
+// Get all patients assigned to a specific doctor by name
+// userController.js - FIXED getAssignPatients function
+exports.getAssignPatients = async (req, res) => {
+  try {
+    console.log("=== getAssignPatients Debug Info ===");
+    
+    // Get the logged-in user's info from JWT token (set by verifyToken middleware)
+    const { email, role, userId } = req.user;
+    console.log("Logged in user:", { email, role, userId });
+
+    // Verify this is a doctor
+    if (role !== 'doctor') {
+      console.log("Access denied - not a doctor");
+      return res.status(403).json({ 
+        success: false,
+        error: "Access denied. Only doctors can view assigned patients." 
+      });
+    }
+
+    // Find the doctor by email
+    const doctor = await Doctor.findOne({ email });
+    console.log("Doctor found:", doctor ? "Yes" : "No");
+    
+    if (!doctor) {
+      console.log("Doctor not found in database");
+      return res.status(404).json({ 
+        success: false,
+        error: "Doctor profile not found. Please contact administrator." 
+      });
+    }
+
+    console.log("Doctor ID:", doctor._id);
+
+    // Find all patients assigned to this doctor
+    const assignedPatients = await Patient.find({ 
+      assignedDoctor: doctor._id 
+    }).populate('assignedDoctor', 'name email specialty');
+    
+    console.log("Assigned patients count:", assignedPatients.length);
+    console.log("Patient IDs:", assignedPatients.map(p => p._id));
+
+    if (assignedPatients.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No patients assigned to this doctor yet.",
+        patients: [],
+        doctorInfo: {
+          name: doctor.name,
+          email: doctor.email,
+          specialty: doctor.specialty
+        }
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Found ${assignedPatients.length} assigned patient(s)`,
+      patients: assignedPatients,
+      doctorInfo: {
+        name: doctor.name,
+        email: doctor.email,
+        specialty: doctor.specialty
       }
-  };
-  
-  
+    });
 
-  
-  
+  } catch (error) {
+    console.error("Error in getAssignPatients:", error);
+    res.status(500).json({ 
+      success: false,
+      error: "Server error while fetching assigned patients", 
+      details: error.message 
+    });
+  }
+};
+// Get all patients where assignedDoctor is empty
+exports.getUnassignedPatients = async (req, res) => {
+  try {
+    // Find patients where assignedDoctor is null or not set
+    const unassignedPatients = await Patient.find({
+      assignedDoctor: { $in: [null, undefined] },
+    });
 
-// Export using CommonJS
-module.exports = { create, login ,getFlapByPatientId,getAssignPatients};
-*/
-require("dotenv").config();  // Load environment variables
-
-const User = require("../models/User");
-const FlapData = require("../models/FlapData");
-const bcrypt = require("bcryptjs");  // For password hashing
-const jwt = require("jsonwebtoken"); // For JWT authentication
-const Doctor = require("../models/Doctor");
-const Patient = require("../models/Patient");
-
-const JWT_SECRET = process.env.JWT_SECRET;  // Get JWT secret from environment variables
-
-// User registration function
-const create = async (req, res) => {
-    try {
-        const { full_name, email, password, role } = req.body;
-
-        // Check if the user already exists
-        const userExist = await User.findOne({ email });
-        if (userExist) {
-            return res.status(400).json({ message: "User already exists." });
-        }
-
-        // Hash password before saving
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        // Create and save new user with hashed password
-        const user = new User({ full_name, email, password: hashedPassword, role });
-        const saveData = await user.save();
-
-        res.status(201).json({ message: "User registered successfully", user: saveData });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
+    res.status(200).json(unassignedPatients);
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 };
 
-// User login function (Restricted to doctors only)
-const login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-
-        // Check if user exists
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ message: "User not found" });
-        }
-
-        // Restrict login to only doctors
-        if (user.role !== "doctor") {
-            return res.status(403).json({ message: "Access denied. Only doctors can log in." });
-        }
-
-        // Validate password
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ message: "Invalid credentials" });
-        }
-
-        // Generate JWT token with longer expiration (24 hours instead of 1 hour)
-        const token = jwt.sign(
-            { userId: user._id, role: user.role },
-            JWT_SECRET,  
-            { expiresIn: "24h" }  // Changed from 1h to 24h
-        );
-
-        res.status(200).json({
-            message: "Login successful",
-            token,
-            user: { id: user._id, full_name: user.full_name, email: user.email, role: user.role }
-        });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+// Delete a user by ID
+exports.deleteUser = async (req, res) => {
+  try {
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
     }
+    res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 };
 
-// Get Flap Data by Patient ID
-const getFlapByPatientId = async (req, res) => {
-    try {
-        const { id } = req.params; // Extract patient ID from request parameters
-        
-        // Get pagination parameters
-        const page = parseInt(req.query.page) || 1; // Page number (default 1)
-        const limit = parseInt(req.query.limit) || 10; // Items per page (default 10)
-        const skip = (page - 1) * limit;
-        
-        // Validate if ID is a valid MongoDB ObjectId
-        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-            return res.status(400).json({ error: "Invalid Patient ID format." });
-        }
-        
-        // DEBUG: Check if any flap data exists for this patient
-const flapCount = await FlapData.countDocuments({ patient_id: id });
-console.log("Total flap records for patient:", flapCount);
+//Get flap data by patient id
+// Get flap data by patient ID with pagination
+exports.getFlapByPatientId = async (req, res) => {
+  try {
+    const { id } = req.params; // Patient ID from route
+    const page = parseInt(req.query.page) || 1; // Page number (default 1)
+    const limit = parseInt(req.query.limit) || 10; // Items per page (default 10)
+    const skip = (page - 1) * limit;
 
-// Fetch flap records - SIMPLIFIED without population first
-const flapRecords = await FlapData.find({ patient_id: id })
-    .sort({ timestamp: -1 })
-    .skip(skip)
-    .limit(limit);
+    // Fetch flap records with pagination
+    const flapRecords = await FlapData.find({ patient_id: id })
+      .populate("patient_id", "name age contact")
+      .sort({ timestamp: -1 })
+      .skip(skip)
+      .limit(limit);
 
-console.log("Fetched flap records:", flapRecords.length);
-        
-        // Count total records for frontend pagination
-        const total = await FlapData.countDocuments({ patient_id: id });
-        
-        if (!flapRecords || flapRecords.length === 0) {
-            return res.status(404).json({ error: "No flap data found for this patient." });
-        }
-        
-        res.status(200).json({
-            total,
-            page,
-            totalPages: Math.ceil(total / limit),
-            records: flapRecords,
-        });
-    } catch (error) {
-        console.error("Error fetching flap data:", error);
-        res.status(500).json({ error: "Server error", details: error.message });
+    // Count total records for frontend pagination
+    const total = await FlapData.countDocuments({ patient_id: id });
+
+    if (!flapRecords || flapRecords.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "No flap data found for this patient." });
     }
-};
-  
 
-const getAssignPatients = async (req, res) => {
-    try {
-        // Get user from JWT token
-        const loggedInUserId = req.user.userId;
-        const user = await User.findById(loggedInUserId);
-        
-        if (!user) {
-            return res.status(404).json({ error: "User not found" });
-        }
-        
-        // Use the user's email (same as web app logic)
-        const email = user.email;
-        console.log("Using email from JWT user:", email);
-
-        // Check if the doctor exists (EXACT same logic as web app)
-        const doctor = await Doctor.findOne({ email });
-        if (!doctor) {
-            return res.status(404).json({ error: "Doctor not found" });
-        }
-
-        // Find all patients assigned to this doctor (EXACT same logic as web app)
-        const assignedPatients = await Patient.find({ assignedDoctor: doctor._id });
-
-        res.status(200).json(assignedPatients);
-    } catch (error) {
-        res.status(500).json({ error: "Server error", details: error.message });
-    }
+    res.status(200).json({
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      records: flapRecords,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 };
 
+// Assign all patients to a specific doctor
+exports.assignAllPatientsToDoctor = async (req, res) => {
+  try {
+    const { doctorId, patientIds } = req.body;
 
-// Export using CommonJS
-module.exports = { create, login, getFlapByPatientId, getAssignPatients };
+    // Check if the doctor exists
+    const doctor = await Doctor.findById(doctorId);
+    if (!doctor) {
+      return res.status(404).json({ error: "Doctor not found" });
+    }
+
+    // Validate patientIds array
+    if (!patientIds || !Array.isArray(patientIds) || patientIds.length === 0) {
+      return res.status(400).json({ error: "No patient IDs provided" });
+    }
+
+    // Update all patients with the assigned doctor
+    const updatedPatients = await Patient.updateMany(
+      { _id: { $in: patientIds } },
+      { $set: { assignedDoctor: doctorId } }
+    );
+
+    res.status(200).json({
+      message: "All patients assigned successfully",
+      modifiedCount: updatedPatients.modifiedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
+};

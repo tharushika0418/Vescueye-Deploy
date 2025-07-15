@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, Image, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 
-const WEBSOCKET_URL = "ws://172.20.10.6:8080"; // Replace with your backend IP
+const WEBSOCKET_URL = "http://172.20.10.6:8080"; 
 
 const LiveFlapScreen = () => {
   const [flapData, setFlapData] = useState([]);
