@@ -8,6 +8,10 @@ jobs:
   deploy:
     runs-on: self-hosted
 
+    defaults:
+      run:
+        working-directory: code/mobile-app/Backend   # Set working dir here
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -17,26 +21,11 @@ jobs:
         with:
           node-version: '20'
 
-      # Adjust this path if your package.json is elsewhere
       - name: Install dependencies
-        working-directory: code/mobile-app/Backend
         run: npm ci
 
       - name: Recreate .env file from GitHub Secret
-        working-directory: code/mobile-app/Backend
-        run: |
-          echo "${{ secrets.MOBILE_SECRETS }}" > .env
+        run: echo "${{ secrets.MOBILE_SECRETS }}" > .env
 
-      - name: Debug repo files in backend folder
-        working-directory: code/mobile-app/Backend
-        run: ls -la
-
-      - name: Debug entire repo structure
-        run: |
-          pwd
-          ls -R
-
-      # Run pm2 command in folder with ecosystem.config.js
       - name: Start or reload app with PM2
-        working-directory: code/mobile-app/Backend
         run: pm2 startOrReload ecosystem.config.js --env production
