@@ -214,71 +214,78 @@ const login = async (req, res) => {
 const getFlapByPatientId = async (req, res) => {
     try {
         const { id } = req.params; // Extract patient ID from request parameters
-    
+        
+        // Get pagination parameters
+        const page = parseInt(req.query.page) || 1; // Page number (default 1)
+        const limit = parseInt(req.query.limit) || 10; // Items per page (default 10)
+        const skip = (page - 1) * limit;
+        
         // Validate if ID is a valid MongoDB ObjectId
         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({ error: "Invalid Patient ID format." });
         }
-    
-        // Fetch all flap records for the patient
-        const flapRecords = await FlapData.find({ patient_id: id })
-            .populate("patient_id", "name age contact") // Include patient details
-            .sort({ timestamp: -1 }); // Sort by latest entry
-    
+        
+        // DEBUG: Check if any flap data exists for this patient
+const flapCount = await FlapData.countDocuments({ patient_id: id });
+console.log("Total flap records for patient:", flapCount);
+
+// Fetch flap records - SIMPLIFIED without population first
+const flapRecords = await FlapData.find({ patient_id: id })
+    .sort({ timestamp: -1 })
+    .skip(skip)
+    .limit(limit);
+
+console.log("Fetched flap records:", flapRecords.length);
+        
+        // Count total records for frontend pagination
+        const total = await FlapData.countDocuments({ patient_id: id });
+        
         if (!flapRecords || flapRecords.length === 0) {
             return res.status(404).json({ error: "No flap data found for this patient." });
         }
-    
-        res.status(200).json(flapRecords);
+        
+        res.status(200).json({
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+            records: flapRecords,
+        });
     } catch (error) {
         console.error("Error fetching flap data:", error);
         res.status(500).json({ error: "Server error", details: error.message });
     }
 };
   
-// Get Assigned Patients for a Doctor by Email
+
 const getAssignPatients = async (req, res) => {
     try {
-        const { email } = req.body; // Extract doctor email from request body
+        // Get user from JWT token
+        const loggedInUserId = req.user.userId;
+        const user = await User.findById(loggedInUserId);
         
-        
-        // Use the user ID from the token instead of relying on email in request body
-        // This is more secure as it prevents doctors from accessing other doctors' patients
-        const doctorId = req.user.userId;
-        console.log(doctorId);
-        
-        // Validate email if you still want to use it
-        if (!email) {
-            return res.status(400).json({ error: "Doctor email is required." });
+        if (!user) {
+            return res.status(404).json({ error: "User not found" });
         }
+        
+        // Use the user's email (same as web app logic)
+        const email = user.email;
+        console.log("Using email from JWT user:", email);
 
-        // Find the doctor by email
+        // Check if the doctor exists (EXACT same logic as web app)
         const doctor = await Doctor.findOne({ email });
         if (!doctor) {
-            return res.status(404).json({ error: "Doctor not found." });
+            return res.status(404).json({ error: "Doctor not found" });
         }
 
-        // Verify the doctor making the request matches the email provided
-        // Uncomment this if you want this extra security check
-        /*
-        if (doctor._id.toString() !== doctorId) {
-            return res.status(403).json({ error: "Unauthorized. You can only view your own patients." });
-        }
-        */
-
-        // Fetch all patients assigned to this doctor
+        // Find all patients assigned to this doctor (EXACT same logic as web app)
         const assignedPatients = await Patient.find({ assignedDoctor: doctor._id });
-        console.log(assignedPatients);
-        if (!assignedPatients || assignedPatients.length === 0) {
-            return res.status(404).json({ error: "No assigned patients found for this doctor." });
-        }
 
         res.status(200).json(assignedPatients);
     } catch (error) {
-        console.error("Error fetching assigned patients:", error);
         res.status(500).json({ error: "Server error", details: error.message });
     }
 };
+
 
 // Export using CommonJS
 module.exports = { create, login, getFlapByPatientId, getAssignPatients };

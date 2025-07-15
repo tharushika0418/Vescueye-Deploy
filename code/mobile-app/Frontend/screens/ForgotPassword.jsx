@@ -13,7 +13,7 @@ const ForgotPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('http:///172.20.10.3:3000/api/auth/forgot-password', {
+      const response = await fetch('http://172.20.10.6:5001/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
