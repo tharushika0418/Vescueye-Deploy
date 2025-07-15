@@ -8,6 +8,10 @@ jobs:
   deploy:
     runs-on: self-hosted
 
+    defaults:
+      run:
+        working-directory: code/mobile-app/Backend  # sets context for all run commands here
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,12 +25,24 @@ jobs:
         run: npm ci
 
       - name: Recreate .env file from GitHub Secret
-        run: |
-          echo "${{ secrets.MOBILE_SECRETS }}" > .env
+        run: echo "${{ secrets.MOBILE_SECRETS }}" > .env
 
-      - name: Build project (if applicable)
-        run: npm run build
-
-      - name: Restart the backend using PM2
+      - name: Create ecosystem.config.js
         run: |
-          pm2 startOrReload ecosystem.config.js --env production
+          cat > ecosystem.config.js << EOF
+          module.exports = {
+            apps: [{
+              name: "vescueye",
+              script: "server.js",
+              instances: "max",
+              exec_mode: "cluster",
+              env_production: {
+                NODE_ENV: "production",
+                PORT: 5001
+              }
+            }]
+          }
+          EOF
+
+      - name: Start or reload app with PM2
+        run: pm2 startOrReload ecosystem.config.js --env production
