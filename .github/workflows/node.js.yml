@@ -23,8 +23,11 @@ jobs:
 
       - name: Recreate .env file from GitHub Secret
         working-directory: code/mobile-app/Backend
-        run: |
-          echo "${{ secrets.MOBILE_SECRETS }}" > .env
+        run: echo "${{ secrets.MOBILE_SECRETS }}" > .env
+
+      - name: Debug files in backend folder
+        working-directory: code/mobile-app/Backend
+        run: ls -la
 
       - name: Start or reload app with PM2
         working-directory: code/mobile-app/Backend
