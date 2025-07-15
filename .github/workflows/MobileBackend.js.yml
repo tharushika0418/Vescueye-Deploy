@@ -1,37 +1,10 @@
-name: Test Runner Connection
+name: Minimal Test
 
 on:
-  workflow_dispatch:  # Manual trigger
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
   test:
     runs-on: self-hosted
     steps:
-      - name: Basic test
-        run: |
-          echo "✅ Runner is working!"
-          echo "Current directory: $(pwd)"
-          echo "User: $(whoami)"
-          echo "Date: $(date)"
-          
-      - name: Check repository
-        uses: actions/checkout@v4
-        
-      - name: List files
-        run: |
-          echo "Repository contents:"
-          ls -la
-          
-      - name: Check for backend directory
-        run: |
-          if [ -d "code/mobile-app/Backend" ]; then
-            echo "✅ Backend directory found"
-            ls -la code/mobile-app/Backend/
-          else
-            echo "❌ Backend directory not found"
-            echo "Searching for Backend directory..."
-            find . -name "Backend" -type d || echo "No Backend directory found"
-          fi
+      - run: echo "Hello World"
