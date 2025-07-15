@@ -10,7 +10,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: code/mobile-app/Backend   # Set working dir here
+        working-directory: code/mobile-app/Backend
 
     steps:
       - name: Checkout code
@@ -28,4 +28,4 @@ jobs:
         run: echo "${{ secrets.MOBILE_SECRETS }}" > .env
 
       - name: Start or reload app with PM2
-        run: pm2 startOrReload ecosystem.config.js --env production
+        run: pm2 startOrReload ../../ecosystem.config.js --env production
