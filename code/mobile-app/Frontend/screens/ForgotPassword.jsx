@@ -1,5 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
+  ActivityIndicator, KeyboardAvoidingView, Platform,
+  TouchableWithoutFeedback, Keyboard, Image
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -21,10 +26,19 @@ const ForgotPassword = ({ navigation }) => {
 
       const data = await response.json();
       if (response.ok) {
-        Alert.alert("Success", "Reset link sent to your email.");
+        Alert.alert(
+          "Email Sent",
+          "Check your email for the reset token, then tap 'Continue' to enter it.",
+          [
+            {
+              text: "Continue",
+              onPress: () => navigation.navigate('ResetPassword')
+            }
+          ]
+        );
         setEmail('');
       } else {
-        Alert.alert("Error", data.message || "Failed to send reset link.");
+        Alert.alert("Error", data.message || "Failed to send reset email.");
       }
     } catch (error) {
       Alert.alert("Error", "Something went wrong. Please try again.");
@@ -34,37 +48,124 @@ const ForgotPassword = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Forgot Password</Text>
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.innerContainer}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
 
-      <TouchableOpacity style={styles.button} onPress={handleResetPassword} disabled={loading}>
-        {loading ? <ActivityIndicator color="white" /> : <Text style={styles.buttonText}>Send Reset Link</Text>}
-      </TouchableOpacity>
+          <Image source={require('../assets/vescueye-logo.png')} style={styles.logo} />
+          <Text style={styles.header}>Forgot Password</Text>
 
-      <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-        <Text style={styles.backButtonText}>Back</Text>
-      </TouchableOpacity>
-    </View>
+          <Text style={styles.instruction}>
+            Enter your email and we’ll send a reset token to your inbox.
+          </Text>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="rgba(255, 255, 255, 0.7)"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleResetPassword}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Send Reset Token</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.linkButton} onPress={() => navigation.navigate('ResetPassword')}>
+            <Text style={styles.linkText}>Already have a reset token?</Text>
+          </TouchableOpacity>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 };
 
-export default ForgotPassword; 
-
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
-  title: { fontSize: 22, fontWeight: 'bold', marginBottom: 15 },
-  input: { width: '100%', padding: 10, borderWidth: 1, borderColor: '#ccc', borderRadius: 5, marginBottom: 15 },
-  button: { width: '100%', backgroundColor: 'blue', padding: 12, borderRadius: 5, alignItems: 'center' },
-  buttonText: { color: 'white', fontSize: 16, fontWeight: 'bold' },
-  backButton: { marginTop: 10, padding: 10 },
-  backButtonText: { color: 'blue', fontSize: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#465a6e',
+  },
+  innerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  backButton: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+  },
+  logo: {
+    width: 120,
+    height: 120,
+    marginBottom: 20,
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  instruction: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.7)',
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 20,
+    paddingHorizontal: 10,
+  },
+  input: {
+    height: 40,
+    width: '80%',
+    borderColor: 'rgba(255,255,255,0.5)',
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    marginBottom: 15,
+    color: '#fff',
+    backgroundColor: 'transparent',
+  },
+  button: {
+    width: '80%',
+    backgroundColor: '#10e0f8',
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: '#aaa',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkButton: {
+    marginTop: 15,
+  },
+  linkText: {
+    color: '#fff',
+    fontSize: 14,
+    textDecorationLine: 'underline',
+  },
 });
+
+export default ForgotPassword;

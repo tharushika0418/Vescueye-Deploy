@@ -20,12 +20,46 @@ exports.forgotPassword = async (req, res) => {
     await user.save({ validateBeforeSave: false });
 
     const resetUrl = `${process.env.LOCALHOST}/api/auth/reset-password/${token}`;
-    const html = `
-      <p>Hello,</p>
-      <p>You requested to reset your password. Click the link below to reset it:</p>
-      <a href="${resetUrl}">${resetUrl}</a>
-      <p>This link will expire in 1 hour.</p>
-    `;
+    
+const html = `
+  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="text-align: center; margin-bottom: 30px;">
+      <h2 style="color: #333;">Password Reset Request</h2>
+    </div>
+
+    <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+      <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
+        <strong>For Mobile App:</strong>
+      </p>
+      <p style="color: #666; font-size: 14px; margin-bottom: 15px;">
+        Copy this token and paste it in your mobile app:
+      </p>
+      <div style="background-color: #fff; padding: 15px; border: 2px dashed #007bff; border-radius: 5px; text-align: center;">
+        <code style="font-size: 16px; font-weight: bold; color: #007bff; word-break: break-all;">
+          ${token}
+        </code>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+      <p style="color: #333; font-size: 16px; margin-bottom: 15px;">
+        <strong>For Web:</strong>
+      </p>
+      <a href="${process.env.LOCALHOST}/api/auth/reset-password/${token}" 
+         style="display: inline-block; padding: 12px 30px; font-size: 16px; 
+                color: white; background-color: #007bff; text-decoration: none; 
+                border-radius: 5px; font-weight: bold;">
+        Reset Password
+      </a>
+    </div>
+
+    <div style="border-top: 1px solid #dee2e6; padding-top: 20px; text-align: center;">
+      <p style="color: #6c757d; font-size: 14px;">
+        This token expires in 1 hour. If you didn't request this, ignore this email.
+      </p>
+    </div>
+  </div>
+`;
 
     const result = await sendEmail(user.email, 'Password Reset Request', html);
 
@@ -67,7 +101,8 @@ exports.resetPassword = async (req, res) => {
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     
-    await user.save();
+    // Skip validation to avoid full_name required error
+    await user.save({ validateBeforeSave: false });
 
     res.status(200).json({ message: 'Password reset successful' });
   } catch (error) {

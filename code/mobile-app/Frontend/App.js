@@ -16,6 +16,7 @@ import HomeScreen from './screens/HomeScreen';
 import ProfileScreen from './screens/ProfileScreen';
 import PatientScreen from './screens/PatientScreen';
 import ForgotPassword from './screens/ForgotPassword';
+import ResetPassword from './screens/ResetPassword'; // NEW IMPORT
 import LiveFlapScreen from './screens/LiveFlapScreen';
 import DoctorDashboard from './screens/DoctorDashboard';
 import ImageViewer from './screens/ImageViewer';
@@ -123,6 +124,7 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="ResetPassword" component={ResetPassword} />
         <Stack.Screen name="LiveFlapScreen" component={LiveFlapScreen} />
         <Stack.Screen name="Dashboard" component={DoctorDashboard} />
         <Stack.Screen name="Patients" component={PatientScreen} />
