@@ -5,7 +5,7 @@ on:
       - main
 jobs:
   deploy:
-    runs-on: ubuntu-latest  # Use GitHub-hosted runner instead
+    runs-on: self-hosted  # Changed from ubuntu-latest to self-hosted
     env:
       NODE_ENV: production
     steps:
