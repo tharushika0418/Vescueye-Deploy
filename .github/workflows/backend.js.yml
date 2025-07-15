@@ -1,18 +1,16 @@
 name: Deploy to EC2
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
+    
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
       with:
@@ -20,21 +18,55 @@ jobs:
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          # Load environment variables for SSH session
+          export PATH=$PATH:/usr/bin:/usr/local/bin
+          source ~/.profile 2>/dev/null || true
+          source ~/.bashrc 2>/dev/null || true
+          
           # Navigate to your app directory
           cd /home/ubuntu/actions-runner/_work/Vescueye-Deploy/Vescueye-Deploy/code/backend
-
+          
           # Pull latest code from GitHub
           git pull origin main
-
+          
           # Install/update dependencies
           npm install
-
-          # Create .env file from secret
+          
+          # Create .env file from the secret
           cat << 'EOF' > .env
           ${{ secrets.VESCUEYE_SECRET }}
           EOF
-
-          # Restart the PM2 process using bash -lc to ensure correct environment
-          bash -lc "pm2 delete vescueye-backend-app || true"
-          bash -lc "pm2 start server.js --name vescueye-backend-app"
-          bash -lc "pm2 save"
+          
+          # Determine PM2 command (fallback to full path if not in PATH)
+          if command -v pm2 &> /dev/null; then
+              PM2_CMD="pm2"
+              echo "✅ PM2 found in PATH"
+          else
+              PM2_CMD="/usr/bin/pm2"
+              echo "⚠️  PM2 not in PATH, using full path: $PM2_CMD"
+          fi
+          
+          # Verify PM2 is working
+          $PM2_CMD --version || {
+              echo "❌ PM2 not found or not working"
+              exit 1
+          }
+          
+          # Stop existing processes (handle both possible names)
+          echo "🔄 Stopping existing processes..."
+          $PM2_CMD delete backend 2>/dev/null || true
+          $PM2_CMD delete vescueye-backend-app 2>/dev/null || true
+          
+          # Start the application
+          echo "🚀 Starting vescueye-backend-app..."
+          $PM2_CMD start server.js --name vescueye-backend-app
+          
+          # Save PM2 configuration
+          echo "💾 Saving PM2 configuration..."
+          $PM2_CMD save
+          
+          # Show final status for verification
+          echo "📊 Final PM2 status:"
+          $PM2_CMD status
+          
+          echo "✅ Deployment completed successfully!"
