@@ -3,9 +3,11 @@ on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Increase job timeout
     
     steps:
     - name: Checkout code
@@ -13,10 +15,12 @@ jobs:
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
+      timeout-minutes: 12  # Increase step timeout
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        command_timeout: 10m  # SSH command timeout
         script: |
           # Load environment variables for SSH session
           export PATH=$PATH:/usr/bin:/usr/local/bin
@@ -27,12 +31,15 @@ jobs:
           cd /home/ubuntu/actions-runner/_work/Vescueye-Deploy/Vescueye-Deploy/code/backend
           
           # Pull latest code from GitHub
+          echo "📥 Pulling latest code..."
           git pull origin main
           
-          # Install/update dependencies
-          npm install
+          # Install/update dependencies (optimized)
+          echo "📦 Installing dependencies..."
+          npm ci --production --silent --prefer-offline --no-audit --progress=false || npm install --silent --prefer-offline --no-audit --progress=false
           
           # Create .env file from the secret
+          echo "🔧 Creating environment file..."
           cat << 'EOF' > .env
           ${{ secrets.VESCUEYE_SECRET }}
           EOF
@@ -52,21 +59,26 @@ jobs:
               exit 1
           }
           
-          # Stop existing processes (handle both possible names)
-          echo "🔄 Stopping existing processes..."
-          $PM2_CMD delete backend 2>/dev/null || true
-          $PM2_CMD delete vescueye-backend-app 2>/dev/null || true
-          
-          # Start the application
-          echo "🚀 Starting vescueye-backend-app..."
-          $PM2_CMD start server.js --name vescueye-backend-app
+          # Optimized restart process
+          echo "🔄 Restarting application..."
+          if $PM2_CMD restart vescueye-backend-app 2>/dev/null; then
+              echo "✅ Application restarted successfully"
+          else
+              echo "🔄 Starting new application instance..."
+              # Stop existing processes (handle both possible names)
+              $PM2_CMD delete backend 2>/dev/null || true
+              $PM2_CMD delete vescueye-backend-app 2>/dev/null || true
+              
+              # Start the application
+              $PM2_CMD start server.js --name vescueye-backend-app
+          fi
           
           # Save PM2 configuration
           echo "💾 Saving PM2 configuration..."
           $PM2_CMD save
           
-          # Show final status for verification
-          echo "📊 Final PM2 status:"
-          $PM2_CMD status
+          # Quick status check (no detailed output to save time)
+          echo "📊 Checking status..."
+          $PM2_CMD list vescueye-backend-app
           
           echo "✅ Deployment completed successfully!"
