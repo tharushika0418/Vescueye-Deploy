@@ -19,6 +19,9 @@ import ForgotPassword from './screens/ForgotPassword';
 import LiveFlapScreen from './screens/LiveFlapScreen';
 import DoctorDashboard from './screens/DoctorDashboard';
 import ImageViewer from './screens/ImageViewer';
+import ResetPassword from './screens/ResetPassword';
+import { LogBox } from 'react-native';
+LogBox.ignoreLogs(['Warning: ...']);
 
 const Stack = createStackNavigator();
 
@@ -103,10 +106,12 @@ export default function App() {
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
+        <Stack.Screen name="ResetPassword" component={ResetPassword} />
         <Stack.Screen name="LiveFlapScreen" component={LiveFlapScreen} />
         <Stack.Screen name="Dashboard" component={DoctorDashboard} />
         <Stack.Screen name="Patients" component={PatientScreen} />
         <Stack.Screen name="ImageViewer" component={ImageViewer} />
+     
       </Stack.Navigator>
     </NavigationContainer>
   );

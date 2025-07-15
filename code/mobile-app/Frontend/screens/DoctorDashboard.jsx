@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { 
-  View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, RefreshControl, Image 
+  View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, 
+  RefreshControl, Image, Alert, Modal, ScrollView, TextInput
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
@@ -8,7 +9,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function DoctorDashboard() {
   const [patients, setPatients] = useState([]);
+  const [filteredPatients, setFilteredPatients] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const [flapData, setFlapData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [flapLoading, setFlapLoading] = useState(false);
@@ -17,26 +21,41 @@ export default function DoctorDashboard() {
   const [token, setToken] = useState("");
   const [tokenLoaded, setTokenLoaded] = useState(false);
   const [doctorInfo, setDoctorInfo] = useState(null);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showingFlapData, setShowingFlapData] = useState(false);
 
   const navigation = useNavigation();
-  // const API_URL = process.env.DEPLOYED_URL || process.env.LOCALHOST ;
   const API_URL = "http://172.20.10.6:5001";
   const BASE_URL = `${API_URL}/api/users`;
+
+  // Filter patients based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredPatients(patients);
+    } else {
+      const filtered = patients.filter(patient =>
+        patient.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        patient.contact?.includes(searchQuery) ||
+        patient.age?.toString().includes(searchQuery)
+      );
+      setFilteredPatients(filtered);
+    }
+  }, [searchQuery, patients]);
 
   useEffect(() => {
     const initializeToken = async () => {
       try {
         const storedToken = await AsyncStorage.getItem("userToken");
-        console.log("Retrieved token:", storedToken ? "Token exists" : "No token found");
         if (storedToken) {
           setToken(storedToken);
         } else {
-          setError("No authentication token found. Please login again.");
+          showFriendlyAlert("Authentication Required", "Please login to access the dashboard.");
           setLoading(false);
         }
       } catch (error) {
         console.error("Error retrieving token:", error);
-        setError("Failed to retrieve authentication token.");
+        showFriendlyAlert("Error", "Unable to retrieve authentication. Please try again.");
         setLoading(false);
       } finally {
         setTokenLoaded(true);
@@ -51,9 +70,24 @@ export default function DoctorDashboard() {
     }
   }, [token, tokenLoaded]);
 
+  const showFriendlyAlert = (title, message, onPress = null) => {
+    Alert.alert(
+      title,
+      message,
+      [
+        {
+          text: "OK",
+          onPress: onPress,
+          style: "default"
+        }
+      ],
+      { cancelable: true }
+    );
+  };
+
   const getPatients = async () => {
     if (!token) {
-      setError("No authentication token available.");
+      showFriendlyAlert("Authentication Required", "Please login to view your patients.");
       setLoading(false);
       return;
     }
@@ -61,8 +95,6 @@ export default function DoctorDashboard() {
     try {
       setError("");
       setLoading(true);
-      console.log("Making request with token:", token.substring(0, 20) + "...");
-      console.log("Request URL:", `${BASE_URL}/doctors/patients`);
 
       const response = await axios.get(
         `${BASE_URL}/doctors/patients`,
@@ -74,34 +106,36 @@ export default function DoctorDashboard() {
         }
       );
 
-      console.log("Response received:", response.status);
-      console.log("Response data:", response.data);
-
       if (response.data.success) {
         setPatients(response.data.patients || []);
         setDoctorInfo(response.data.doctorInfo);
-        console.log("Patients loaded:", response.data.patients?.length || 0);
       } else {
-        setError(response.data.error || "Failed to load patients");
+        setError("Unable to load your patients. Please try again.");
         setPatients([]);
       }
     } catch (error) {
       console.error("Error fetching assigned patients:", error);
-      console.error("Error response:", error.response?.data);
-      console.error("Error status:", error.response?.status);
 
       if (error.response?.status === 401) {
-        setError("Authentication failed. Please login again.");
-        await AsyncStorage.removeItem("userToken");
-        setToken("");
+        showFriendlyAlert(
+          "Session Expired", 
+          "Your session has expired. Please login again.",
+          async () => {
+            await AsyncStorage.removeItem("userToken");
+            setToken("");
+            navigation.navigate("Login");
+          }
+        );
       } else if (error.response?.status === 403) {
-        setError("Access denied. Only doctors can view assigned patients.");
+        setError("Access denied. Only doctors can view assigned patients. Please contact support if you believe this is an error.");
+        setPatients([]);
       } else if (error.response?.status === 404) {
-        setError("Doctor profile not found. Please contact administrator.");
+        setError("Your doctor profile was not found. Please contact support for assistance.");
+        setPatients([]);
       } else {
         const errorMessage = error.response?.data?.error || 
                            error.response?.data?.message || 
-                           "Failed to load patients.";
+                           "Unable to load patients. Please check your connection and try again.";
         setError(errorMessage);
       }
       setPatients([]);
@@ -113,46 +147,44 @@ export default function DoctorDashboard() {
 
   const onRefresh = () => {
     if (!token) {
-      setError("Please login again to refresh data.");
+      showFriendlyAlert("Authentication Required", "Please login again to refresh data.");
       return;
     }
     setRefreshing(true);
     getPatients();
   };
 
-  const handleFetchFlapData = async (patientId) => {
+  const handleFetchFlapData = async (patient) => {
     if (!token) {
-      setError("Authentication required. Please login again.");
+      showFriendlyAlert("Authentication Required", "Please login again to view flap data.");
       return;
     }
 
-    setSelectedPatientId(patientId);
+    setSelectedPatientId(patient._id);
+    setSelectedPatient(patient);
     setFlapData([]);
     setFlapLoading(true);
     setError("");
+    setShowingFlapData(true);
 
     try {
-      console.log("Fetching flap data for patient:", patientId);
-      const response = await axios.get(`${BASE_URL}/flap/search/${patientId}`, {
+      const response = await axios.get(`${BASE_URL}/flap/search/${patient._id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
-      console.log("Flap data response:", response.status);
-      console.log("Flap data:", response.data);
       
       if (response.data.records) {
         setFlapData(response.data.records);
-        console.log(`Loaded ${response.data.records.length} flap records`);
+        if (response.data.records.length === 0) {
+          showFriendlyAlert("No Data", `No flap monitoring data found for ${patient.name}.`);
+        }
       } else {
         setFlapData(response.data || []);
       }
-      setError(""); // Clear any flap error on success
     } catch (error) {
       console.error("Error fetching flap data:", error);
-      console.error("Flap error response:", error.response?.data);
 
       if (error.response?.status === 404) {
         const errorMessage = (error.response?.data?.error || error.response?.data?.message || "").toLowerCase();
@@ -161,35 +193,61 @@ export default function DoctorDashboard() {
           errorMessage.includes("not found")
         ) {
           setFlapData([]);
-          setError("");
+          showFriendlyAlert("No Data", `No flap monitoring data found for ${patient.name}.`);
         } else {
-          setError("Patient or flap data not found.");
+          setError("Patient data not found.");
         }
       } else if (error.response?.status === 401) {
-        setError("Authentication failed. Please login again.");
-        await AsyncStorage.removeItem("userToken");
-        setToken("");
+        showFriendlyAlert(
+          "Session Expired", 
+          "Your session has expired. Please login again.",
+          async () => {
+            await AsyncStorage.removeItem("userToken");
+            setToken("");
+            navigation.navigate("Login");
+          }
+        );
+      } else if (error.response?.status === 403) {
+        setError("Access denied. Only doctors can view flap data. Please contact support if you believe this is an error.");
       } else {
-        setError(error.response?.data?.error || 
-                error.response?.data?.message || 
-                "Failed to load flap data. Please try again.");
+        setError("Unable to load flap data. Please try again.");
       }
     } finally {
       setFlapLoading(false);
     }
   };
 
-  const clearFlapData = () => {
+  const backToPatientList = () => {
     setSelectedPatientId(null);
+    setSelectedPatient(null);
     setFlapData([]);
     setError("");
+    setShowingFlapData(false);
+  };
+
+  const handleImagePress = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setModalVisible(true);
+  };
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "N/A";
+    const date = new Date(timestamp);
+    return date.toLocaleDateString() + " at " + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  };
+
+  const getTemperatureColor = (temp) => {
+    if (temp == null) return "#999";
+    if (temp < 35) return "#3498db"; // Blue for low
+    if (temp > 37.5) return "#e74c3c"; // Red for high
+    return "#2ecc71"; // Green for normal
   };
 
   if (!tokenLoaded) {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color="#10e0f8" />
-        <Text style={styles.loadingText}>Loading...</Text>
+        <Text style={styles.loadingText}>Setting up your dashboard...</Text>
       </View>
     );
   }
@@ -198,100 +256,41 @@ export default function DoctorDashboard() {
     return (
       <View style={styles.container}>
         <Text style={styles.header}>Doctor Dashboard</Text>
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>Authentication required. Please login first.</Text>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate("Login")}>
-            <Text style={styles.buttonText}>Go to Login</Text>
+        <View style={styles.welcomeContainer}>
+          <Text style={styles.welcomeText}>Welcome to your patient dashboard!</Text>
+          <Text style={styles.subText}>Please login to view your assigned patients.</Text>
+          <TouchableOpacity style={[styles.primaryButton, { flex: 1 }]} onPress={() => navigation.navigate("Login")}>
+            <Text style={styles.buttonText}>Login</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Doctor Dashboard</Text>
-      {doctorInfo && (
-        <View style={styles.doctorInfoContainer}>
-          <Text style={styles.doctorInfoText}>Welcome, Dr. {doctorInfo.name}!</Text>
-          <Text style={styles.doctorInfoSubText}>{doctorInfo.specialty}</Text>
-        </View>
-      )}
+  // If showing flap data, render the flap data view
+  if (showingFlapData) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.header}>Flap Monitoring Data</Text>
+        
+        {/* Back Button */}
+        <TouchableOpacity style={styles.backButton} onPress={backToPatientList}>
+          <Text style={styles.backButtonText}>← Back to Patient List</Text>
+        </TouchableOpacity>
 
-      {loading ? (
-        <View style={styles.centerContent}>
-          <ActivityIndicator size="large" color="#10e0f8" />
-          <Text style={styles.loadingText}>Loading patients...</Text>
-        </View>
-      ) : error && !patients.length ? (
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity style={styles.button} onPress={() => getPatients()}>
-            <Text style={styles.buttonText}>Retry</Text>
-          </TouchableOpacity>
-        </View>
-      ) : patients.length === 0 ? (
-        <View style={styles.infoContainer}>
-          <Text style={styles.infoText}>No patients assigned to you yet.</Text>
-          <TouchableOpacity style={styles.button} onPress={() => getPatients()}>
-            <Text style={styles.buttonText}>Refresh</Text>
-          </TouchableOpacity>
-        </View>
-      ) : (
-        <>
-          <Text style={styles.patientCount}>
-            Assigned Patients: {patients.length}
+        <View style={styles.patientHeaderContainer}>
+          <Text style={styles.patientHeaderName}>Patient: {selectedPatient?.name}</Text>
+          <Text style={styles.patientHeaderInfo}>
+            Age: {selectedPatient?.age || "N/A"} | Contact: {selectedPatient?.contact || "N/A"}
           </Text>
-          <FlatList
-            data={patients}
-            keyExtractor={(item, index) => item._id || index.toString()}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            renderItem={({ item }) => (
-              <View style={styles.card}>
-                <Text style={styles.cardText}>
-                  <Text style={styles.boldText}>Name:</Text> {item.name ?? "N/A"}
-                </Text>
-                <Text style={styles.cardText}>
-                  <Text style={styles.boldText}>Age:</Text> {item.age ?? "N/A"}
-                </Text>
-                <Text style={styles.cardText}>
-                  <Text style={styles.boldText}>Contact:</Text> {item.contact ?? "N/A"}
-                </Text>
-                <Text style={styles.cardText}>
-                  <Text style={styles.boldText}>Gender:</Text> {item.gender ?? "N/A"}
-                </Text>
-                {item.medicalHistory && (
-                  <Text style={styles.cardText}>
-                    <Text style={styles.boldText}>Medical History:</Text> {item.medicalHistory}
-                  </Text>
-                )}
-                <View style={styles.buttonContainer}>
-                  <TouchableOpacity 
-                    style={styles.button} 
-                    onPress={() => handleFetchFlapData(item._id)}
-                  >
-                    <Text style={styles.buttonText}>View Flap Data</Text>
-                  </TouchableOpacity>
-                  {selectedPatientId === item._id && (
-                    <TouchableOpacity 
-                      style={[styles.button, styles.clearButton]} 
-                      onPress={clearFlapData}
-                    >
-                      <Text style={styles.buttonText}>Clear</Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
-            )}
-          />
-        </>
-      )}
-
-      {selectedPatientId && (
+        </View>
+        
         <View style={styles.flapContainer}>
           <Text style={styles.sectionTitle}>
-            Flap Data {flapData.length > 0 && `(${flapData.length} records)`}
+            🔬 Flap Monitoring Records
+            {flapData.length > 0 && ` (${flapData.length} records)`}
           </Text>
+          
           {flapLoading ? (
             <View style={styles.centerContent}>
               <ActivityIndicator size="large" color="#10e0f8" />
@@ -301,10 +300,10 @@ export default function DoctorDashboard() {
             <View style={styles.flapErrorContainer}>
               <Text style={styles.errorText}>{error}</Text>
               <TouchableOpacity 
-                style={styles.button} 
-                onPress={() => handleFetchFlapData(selectedPatientId)}
+                style={[styles.primaryButton, { flex: 1 }]} 
+                onPress={() => handleFetchFlapData(selectedPatient)}
               >
-                <Text style={styles.buttonText}>Retry</Text>
+                <Text style={styles.buttonText}>Try Again</Text>
               </TouchableOpacity>
             </View>
           ) : flapData.length > 0 ? (
@@ -313,46 +312,189 @@ export default function DoctorDashboard() {
               keyExtractor={(item, index) => item._id || index.toString()}
               renderItem={({ item }) => (
                 <View style={styles.flapCard}>
-                  <Text style={styles.cardText}>
-                    <Text style={styles.boldText}>Temperature:</Text> {
-                      item.temperature != null ? `${item.temperature.toFixed(2)}°C` : "N/A"
-                    }
-                  </Text>
-                  <Text style={styles.cardText}>
-                    <Text style={styles.boldText}>Time:</Text> {
-                      item.timestamp ? new Date(item.timestamp).toLocaleString() : "N/A"
-                    }
-                  </Text>
-                  {item.patient_id && item.patient_id.name && (
-                    <Text style={styles.cardText}>
-                      <Text style={styles.boldText}>Patient:</Text> {item.patient_id.name}
+                  <View style={styles.flapCardHeader}>
+                    <Text style={[styles.temperatureText, { color: getTemperatureColor(item.temperature) }]}>
+                      🌡️ {item.temperature != null ? `${item.temperature.toFixed(1)}°C` : "N/A"}
                     </Text>
-                  )}
+                    <Text style={styles.timestampText}>
+                      🕐 {formatDate(item.timestamp)}
+                    </Text>
+                  </View>
+                  
                   {item.image_url ? (
-                    <View style={styles.imageContainer}>
+                    <TouchableOpacity 
+                      style={styles.imageContainer}
+                      onPress={() => handleImagePress(item.image_url)}
+                    >
                       <Image
                         source={{ uri: item.image_url }}
                         style={styles.flapImage}
-                        resizeMode="contain"
-                        onError={(error) => {
-                          console.log("Failed to load flap image for record:", item._id);
-                          console.log("Image URL:", item.image_url);
-                          console.log("Error:", error.nativeEvent.error);
-                        }}
-                        onLoad={() => console.log("Image loaded successfully for record:", item._id)}
+                        resizeMode="cover"
                       />
-                    </View>
+                      <Text style={styles.imageHint}>Tap to view full size</Text>
+                    </TouchableOpacity>
                   ) : (
-                    <Text style={styles.noImageText}>No image available</Text>
+                    <View style={styles.noImageContainer}>
+                      <Text style={styles.noImageText}>📷 No image available</Text>
+                    </View>
                   )}
                 </View>
               )}
               style={styles.flapList}
+              showsVerticalScrollIndicator={false}
             />
           ) : (
-            <Text style={styles.noDataText}>No flap data available for this patient.</Text>
+            <View style={styles.noDataContainer}>
+              <Text style={styles.noDataText}>📊 No flap monitoring data available for this patient.</Text>
+            </View>
           )}
         </View>
+
+        {/* Image Modal */}
+        <Modal
+          animationType="fade"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => setModalVisible(false)}
+        >
+          <View style={styles.modalContainer}>
+            <TouchableOpacity 
+              style={styles.modalBackground}
+              onPress={() => setModalVisible(false)}
+            >
+              <View style={styles.modalContent}>
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={styles.modalImage}
+                  resizeMode="contain"
+                />
+                <TouchableOpacity 
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Text style={styles.closeButtonText}>✕ Close</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Doctor Dashboard</Text>
+      
+      {doctorInfo && (
+        <View style={styles.doctorInfoContainer}>
+          <Text style={styles.doctorInfoText}>Welcome back, Dr. {doctorInfo.name}! 👨‍⚕️</Text>
+          <Text style={styles.doctorInfoSubText}>{doctorInfo.specialty}</Text>
+        </View>
+      )}
+
+      {loading ? (
+        <View style={styles.centerContent}>
+          <ActivityIndicator size="large" color="#10e0f8" />
+          <Text style={styles.loadingText}>Loading your patients...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.accessDeniedContainer}>
+          <Text style={styles.accessDeniedTitle}>🚫 Access Denied</Text>
+          <Text style={styles.accessDeniedText}>{error}</Text>
+          <View style={styles.accessDeniedButtonContainer}>
+            <TouchableOpacity style={styles.primaryButton} onPress={() => getPatients()}>
+              <Text style={styles.buttonText}>🔄 Try Again</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton} 
+              onPress={async () => {
+                await AsyncStorage.removeItem("userToken");
+                setToken("");
+                navigation.navigate("Login");
+              }}
+            >
+              <Text style={styles.buttonText}>🚪 Logout</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : patients.length === 0 ? (
+        <View style={styles.noAssignedPatientsContainer}>
+          <Text style={styles.noAssignedPatientsTitle}>👥 No Assigned Patients</Text>
+          <Text style={styles.noAssignedPatientsText}>
+            You currently don't have any patients assigned to you. 
+            {"\n\n"}
+            New patient assignments will appear here automatically when they are made by the administration.
+          </Text>
+          <TouchableOpacity style={[styles.primaryButton, { flex: 1 }]} onPress={() => getPatients()}>
+            <Text style={styles.buttonText}>🔄 Refresh</Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search patients by name, contact, or age..."
+              placeholderTextColor="#aaa"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+
+          <Text style={styles.patientCount}>
+            📋 {filteredPatients.length} of {patients.length} patients
+            {searchQuery ? " (filtered)" : ""}
+          </Text>
+
+          <FlatList
+            data={filteredPatients}
+            keyExtractor={(item, index) => item._id || index.toString()}
+            refreshControl={
+              <RefreshControl 
+                refreshing={refreshing} 
+                onRefresh={onRefresh}
+                colors={["#10e0f8"]}
+                tintColor="#10e0f8"
+              />
+            }
+            renderItem={({ item }) => (
+              <View style={styles.card}>
+                <View style={styles.cardHeader}>
+                  <Text style={styles.patientName}>{item.name ?? "Unknown Patient"}</Text>
+                  <Text style={styles.patientAge}>{item.age ?? "N/A"} years</Text>
+                </View>
+                
+                <View style={styles.cardContent}>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>📞 Contact:</Text>
+                    <Text style={styles.infoValue}>{item.contact ?? "Not provided"}</Text>
+                  </View>
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>👤 Gender:</Text>
+                    <Text style={styles.infoValue}>{item.gender ?? "Not specified"}</Text>
+                  </View>
+                  {item.medicalHistory && (
+                    <View style={styles.infoRow}>
+                      <Text style={styles.infoLabel}>🏥 Medical History:</Text>
+                      <Text style={styles.infoValue}>{item.medicalHistory}</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.buttonContainer}>
+                  <TouchableOpacity 
+                    style={[styles.primaryButton, { flex: 1 }]} 
+                    onPress={() => handleFetchFlapData(item)}
+                  >
+                    <Text style={styles.buttonText}>📊 View Flap Data</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+            showsVerticalScrollIndicator={false}
+          />
+        </>
       )}
     </View>
   );
@@ -377,27 +519,113 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginBottom: 10,
   },
+  backButton: {
+    backgroundColor: "#34495e",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 20,
+    alignSelf: "flex-start",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  backButtonText: {
+    color: "#10e0f8",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  patientHeaderContainer: {
+    backgroundColor: "#34495e",
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  patientHeaderName: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 5,
+  },
+  patientHeaderInfo: {
+    fontSize: 14,
+    color: "#bdc3c7",
+  },
+  welcomeContainer: {
+    backgroundColor: "#2c3e50",
+    padding: 30,
+    borderRadius: 15,
+    marginTop: 50,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  welcomeText: {
+    fontSize: 20,
+    fontWeight: "600",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 10,
+  },
+  subText: {
+    fontSize: 16,
+    color: "#bdc3c7",
+    textAlign: "center",
+    marginBottom: 25,
+  },
   doctorInfoContainer: {
     backgroundColor: "#34495e",
     padding: 15,
     borderRadius: 8,
     marginBottom: 20,
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   doctorInfoText: {
     fontSize: 18,
     fontWeight: "600",
     color: "#f0f0f0",
+    textAlign: "center",
   },
   doctorInfoSubText: {
     fontSize: 14,
     color: "#a0a0a0",
+    marginTop: 5,
+  },
+  searchContainer: {
+    marginBottom: 15,
+  },
+  searchInput: {
+    backgroundColor: "#34495e",
+    padding: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    color: "#fff",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
+    elevation: 2,
   },
   patientCount: {
     color: "#e1e1e1",
     fontSize: 16,
     fontWeight: "600",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   card: {
     backgroundColor: "#2c3e50",
@@ -408,110 +636,294 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 3,
     shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  flapCard: {
-    backgroundColor: "#34495e",
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 10,
+  cardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
-  cardText: {
+  patientName: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    flex: 1,
+  },
+  patientAge: {
+    fontSize: 14,
+    color: "#bdc3c7",
+    fontWeight: "500",
+  },
+  cardContent: {
+    marginBottom: 15,
+  },
+  infoRow: {
+    flexDirection: "row",
+    marginBottom: 8,
+    alignItems: "flex-start",
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: "#10e0f8",
+    fontWeight: "500",
+    minWidth: 100,
+  },
+  infoValue: {
     fontSize: 14,
     color: "#eee",
-    marginBottom: 3,
-  },
-  boldText: {
-    fontWeight: "bold",
-    color: "#10e0f8",
+    flex: 1,
   },
   buttonContainer: {
     flexDirection: "row",
-    marginTop: 10,
+    justifyContent: "space-between",
   },
-  button: {
+  primaryButton: {
     backgroundColor: "#10e0f8",
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    marginRight: 10,
-  },
-  clearButton: {
-    backgroundColor: "#e74c3c",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    flex: 0.45,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
   buttonText: {
     color: "#0d0d0d",
     fontWeight: "bold",
+    textAlign: "center",
+    fontSize: 16,
+  },
+  noAssignedPatientsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#2c3e50",
+    margin: 20,
+    padding: 40,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  noAssignedPatientsTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  noAssignedPatientsText: {
+    fontSize: 16,
+    color: "#bdc3c7",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 30,
   },
   flapContainer: {
-    marginTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: "#10e0f8",
-    paddingTop: 10,
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
     color: "#10e0f8",
-    marginBottom: 10,
+    marginBottom: 15,
   },
   flapList: {
-    maxHeight: 300,
+    flex: 1,
+  },
+  flapCard: {
+    backgroundColor: "#34495e",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  flapCardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
+  },
+  temperatureText: {
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  timestampText: {
+    fontSize: 14,
+    color: "#bdc3c7",
   },
   imageContainer: {
-    marginTop: 10,
     alignItems: "center",
     backgroundColor: "#2c3e50",
     borderRadius: 8,
-    padding: 8,
+    padding: 10,
   },
   flapImage: {
-    width: 200,
-    height: 150,
+    width: 250,
+    height: 180,
     borderRadius: 8,
-    backgroundColor: "#f0f0f0",
   },
-  noDataText: {
-    color: "#bbb",
+  imageHint: {
+    fontSize: 12,
+    color: "#bdc3c7",
+    marginTop: 8,
     fontStyle: "italic",
-    fontSize: 14,
-    marginTop: 5,
+  },
+  noImageContainer: {
+    alignItems: "center",
+    padding: 20,
   },
   noImageText: {
     color: "#aaa",
-    fontSize: 12,
+    fontSize: 14,
     fontStyle: "italic",
-    marginTop: 5,
     textAlign: "center",
+  },
+  noDataContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
+  noDataText: {
+    color: "#bdc3c7",
+    fontStyle: "italic",
+    fontSize: 16,
+    textAlign: "center",
+    lineHeight: 24,
   },
   loadingText: {
     color: "#10e0f8",
-    marginTop: 8,
-    fontSize: 14,
+    marginTop: 10,
+    fontSize: 16,
   },
-  errorContainer: {
-    backgroundColor: "#ff4d4d",
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 20,
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#e74c3c",
+    margin: 20,
+    padding: 40,
+    borderRadius: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
   },
-  flapErrorContainer: {
-    backgroundColor: "#ff6666",
-    padding: 10,
-    borderRadius: 8,
-    marginVertical: 10,
+  accessDeniedTitle: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#fff",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  accessDeniedText: {
+    fontSize: 16,
+    color: "#fff",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 30,
+  },
+  accessDeniedButtonContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+  },
+  logoutButton: {
+    backgroundColor: "#34495e",
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 25,
+    flex: 0.45,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
   },
   errorText: {
     color: "#fff",
-    fontWeight: "bold",
+    fontWeight: "500",
     textAlign: "center",
+    marginBottom: 20,
+    fontSize: 16,
+    lineHeight: 22,
   },
-  infoContainer: {
-    marginTop: 40,
+  flapErrorContainer: {
+    backgroundColor: "#e74c3c",
+    padding: 15,
+    borderRadius: 8,
+    marginVertical: 10,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.9)",
+    justifyContent: "center",
     alignItems: "center",
   },
-  infoText: {
-    color: "#eee",
+  modalBackground: {
+    flex: 1,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    backgroundColor: "#fff",
+    borderRadius: 15,
+    padding: 20,
+    alignItems: "center",
+    maxWidth: "95%",
+    maxHeight: "90%",
+    shadowColor: "#000",
+    shadowOpacity: 0.5,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+  },
+  modalImage: {
+    width: 350,
+    height: 350,
+    borderRadius: 10,
+  },
+  closeButton: {
+    backgroundColor: "#10e0f8",
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 25,
+    marginTop: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+  },
+  closeButtonText: {
+    color: "#0d0d0d",
+    fontWeight: "bold",
     fontSize: 16,
-    marginBottom: 15,
   },
 });

@@ -1,110 +1,72 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 
-// Configure Nodemailer with Outlook SMTP
-const transporter = nodemailer.createTransporter({
-  host: "smtp.office365.com", 
-  port: 587, 
-  secure: false, // true for 465, false for other ports
+// Debug environment variables
+console.log("📧 Email config check:");
+console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "SET (16 chars)" : "NOT SET");
+
+// Configure Nodemailer with Gmail SMTP
+const transporter = nodemailer.createTransport({
+  service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: process.env.EMAIL_USER, // your Gmail address
+    pass: process.env.EMAIL_PASS, // your Gmail app password
   },
-  tls: {
-    ciphers: 'SSLv3'
-  }
 });
 
-// Verify connection configuration
-transporter.verify(function(error, success) {
+// Verify SMTP connection on startup
+transporter.verify((error, success) => {
   if (error) {
-    console.log('SMTP connection error:', error);
+    console.error("❌ SMTP connection failed:", error);
   } else {
-    console.log('SMTP connection successful');
+    console.log("✅ SMTP server is ready to send emails");
   }
 });
 
-// Function to send password reset email
-const sendPasswordResetEmail = async (to, resetToken, userFirstName = '') => {
-  const resetUrl = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
-  
-  const htmlContent = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <style>
-            body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-            .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-            .header { background: #f4f4f4; padding: 20px; text-align: center; }
-            .content { padding: 20px; }
-            .button { display: inline-block; padding: 12px 24px; background: #007bff; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
-            .footer { font-size: 12px; color: #666; margin-top: 30px; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h2>Password Reset Request</h2>
-            </div>
-            <div class="content">
-                <p>Hello ${userFirstName ? userFirstName : ''},</p>
-                <p>You requested to reset your password. Click the button below to reset it:</p>
-                <a href="${resetUrl}" class="button">Reset Password</a>
-                <p>Or copy and paste this link into your browser:</p>
-                <p style="word-break: break-all;">${resetUrl}</p>
-                <p><strong>This link will expire in 1 hour.</strong></p>
-                <p>If you didn't request this password reset, please ignore this email.</p>
-            </div>
-            <div class="footer">
-                <p>This is an automated message, please do not reply to this email.</p>
-            </div>
-        </div>
-    </body>
-    </html>
-  `;
+/**
+ * Send email with both HTML and plain text content
+ * @param {string} to - Recipient email address
+ * @param {string} subject - Email subject
+ * @param {string} html - HTML email content
+ * @param {string} text - Plain text email content (fallback)
+ */
+const sendEmail = async (to, subject, html, text) => {
+  console.log(`📧 Attempting to send email to: ${to}`);
 
-  return await sendEmail(to, 'Password Reset Request', htmlContent);
-};
-
-// Generic function to send an email
-const sendEmail = async (to, subject, html) => {
-  try { // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(to)) {
-      throw new Error('Invalid email format');
-    }
-
+  try {
     const mailOptions = {
-      from: `"${process.env.APP_NAME || 'Your App'}" <${process.env.EMAIL_USER}>`,
+      from: process.env.EMAIL_USER,
       to,
       subject,
-      html,
+      text, // Plain text fallback
+      html, // HTML content
     };
 
+    console.log("Mail options:", {
+      from: mailOptions.from,
+      to: mailOptions.to,
+      subject: mailOptions.subject,
+    });
+
     const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent:", info.response);
-    return { 
-      success: true, 
-      message: "Email sent successfully",
-      messageId: info.messageId 
-    };
+    console.log("✅ Email sent successfully:", info.messageId);
+    return { success: true, message: "Email sent successfully", messageId: info.messageId };
   } catch (error) {
-    console.error("Error sending email:", error);
-    let errorMessage = "Email sending failed";
-    if (error.code === 'EAUTH') {
-      errorMessage = "Email authentication failed";
-    } else if (error.code === 'ECONNECTION') {
-      errorMessage = "Unable to connect to email server";
-    } else if (error.message.includes('Invalid email')) {
-      errorMessage = "Invalid email address";
-    }
-    
-    return { 
-      success: false, 
-      message: errorMessage, 
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    console.error("❌ Detailed email error:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+    });
+
+    return {
+      success: false,
+      message: "Email sending failed",
+      error: error.message,
+      details: error,
     };
   }
 };
 
-module.exports = { sendEmail, sendPasswordResetEmail };
+module.exports = { sendEmail };
