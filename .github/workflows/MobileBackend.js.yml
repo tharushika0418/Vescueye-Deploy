@@ -1,13 +1,9 @@
-name: Deploy Mobile app
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   deploy:
     runs-on: self-hosted
+
+    env:
+      PM2_HOME: /home/ubuntu/.pm2   # Set PM2 home globally for the job
 
     steps:
       - name: Checkout code
@@ -31,8 +27,6 @@ jobs:
       - name: Write .env file from MOBILE_SECRETS secret
         run: |
           echo "${{ secrets.MOBILE_SECRETS }}" > code/mobile-app/Backend/.env
-        # Optional: uncomment below line for debugging env content (don't do this in production!)
-        # run: cat code/mobile-app/Backend/.env
 
       - name: Start backend with PM2
         run: |
