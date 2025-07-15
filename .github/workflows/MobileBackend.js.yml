@@ -1,57 +1,70 @@
 name: Deploy to EC2 with PM2
-
 on:
   push:
     branches:
       - main
-
 jobs:
   deploy:
     runs-on: self-hosted
-
     env:
-      PM2_HOME: /home/ubuntu/.pm2  # Ensure PM2 home is consistent across steps
-      NODE_ENV: production          # Optional: set node environment
-
+      NODE_ENV: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Install dependencies
         run: |
           cd code/mobile-app/Backend
           npm ci
-
-      - name: Install PM2 globally (no sudo)
+      
+      - name: Install PM2 globally with proper permissions
         run: |
-          npm install -g pm2
-
+          # Install PM2 globally with sudo if needed, or use npx
+          if ! command -v pm2 &> /dev/null; then
+            sudo npm install -g pm2 || npm install -g pm2
+          fi
+          # Verify PM2 is accessible
+          pm2 --version
+      
       - name: Stop existing backend app (if any)
         run: |
           cd code/mobile-app/Backend
           pm2 delete backend || echo "No existing app to delete"
-          # Don't run pm2 kill here
-
+          # Optional: pm2 kill to reset PM2 daemon if needed
+          # pm2 kill
+      
       - name: Write .env file from MOBILE_SECRETS secret
         run: |
           echo "${{ secrets.MOBILE_SECRETS }}" > code/mobile-app/Backend/.env
-
+          # Verify .env file was created
+          ls -la code/mobile-app/Backend/.env
+      
       - name: Start backend with PM2
         run: |
           cd code/mobile-app/Backend
           pm2 start server.js --name backend
           pm2 save
-
+          # Show immediate status
+          pm2 list
+      
       - name: Health check backend app
         run: |
           cd code/mobile-app/Backend
-          echo "Waiting 20 seconds for app to start..."
-          sleep 20
-          if pm2 show backend | grep -q "online"; then
-            echo "✅ Application is running with PM2"
-            pm2 show backend
-          else
-            echo "❌ Application failed to start"
-            pm2 logs backend --lines 50
-            exit 1
-          fi
+          echo "Waiting for app to start..."
+          
+          # Wait up to 60 seconds for the app to be online
+          for i in {1..12}; do
+            if pm2 show backend | grep -q "online"; then
+              echo "✅ Application is running with PM2"
+              pm2 show backend
+              pm2 logs backend --lines 10
+              exit 0
+            fi
+            echo "Attempt $i/12: App not ready yet, waiting 5 seconds..."
+            sleep 5
+          done
+          
+          echo "❌ Application failed to start within 60 seconds"
+          pm2 logs backend --lines 50
+          pm2 show backend
+          exit 1
