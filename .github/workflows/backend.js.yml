@@ -1,4 +1,5 @@
 name: Deploy to EC2
+
 on:
   push:
     branches: [ main ]
@@ -28,14 +29,12 @@ jobs:
           # Install/update dependencies
           npm install
 
-          # Create .env file from the secret
+          # Create .env file from secret
           cat << 'EOF' > .env
           ${{ secrets.VESCUEYE_SECRET }}
           EOF
 
-          # Stop existing process if it exists, then start fresh
-          /usr/bin/pm2 delete vescueye-backend-app 2>/dev/null || true
-          /usr/bin/pm2 start server.js --name vescueye-backend-app
-
-          # Save PM2 configuration
-          /usr/bin/pm2 save
+          # Restart the PM2 process using bash -lc to ensure correct environment
+          bash -lc "pm2 delete vescueye-backend-app || true"
+          bash -lc "pm2 start server.js --name vescueye-backend-app"
+          bash -lc "pm2 save"
