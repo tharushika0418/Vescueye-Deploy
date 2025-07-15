@@ -18,12 +18,14 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        working-directory: Backend
         run: npm ci
 
       - name: Recreate .env file from GitHub Secret
+        working-directory: Backend
         run: |
           echo "${{ secrets.MOBILE_SECRETS }}" > .env
 
       - name: Start or reload app with PM2
-        run: |
-          pm2 startOrReload ecosystem.config.js --env production
+        working-directory: Backend
+        run: pm2 startOrReload ecosystem.config.js --env production
