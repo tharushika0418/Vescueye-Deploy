@@ -1,11 +1,14 @@
 name: Deploy to EC2
+
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # Increase job timeout
     
     steps:
     - name: Checkout code
@@ -13,28 +16,85 @@ jobs:
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.7
+      timeout-minutes: 12  # Increase step timeout
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USER }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        command_timeout: 10m  # SSH command timeout
         script: |
+          # Load environment variables for SSH session
+          export PATH=$PATH:/usr/bin:/usr/local/bin
+          source ~/.profile 2>/dev/null || true
+          source ~/.bashrc 2>/dev/null || true
+          
           # Navigate to your app directory
           cd /home/ubuntu/actions-runner/_work/Vescueye-Deploy/Vescueye-Deploy/code/backend
           
           # Pull latest code from GitHub
+          echo "📥 Pulling latest code..."
           git pull origin main
           
-          # Install/update dependencies
-          npm install
+          # Install/update dependencies (optimized)
+          echo "📦 Installing dependencies..."
+          npm ci --production --silent --prefer-offline --no-audit --progress=false || npm install --silent --prefer-offline --no-audit --progress=false
           
           # Create .env file from the secret
+          echo "🔧 Creating environment file..."
           cat << 'EOF' > .env
           ${{ secrets.VESCUEYE_SECRET }}
           EOF
           
-          # Stop existing process if it exists, then start fresh
-          pm2 delete vescueye-backend-app 2>/dev/null || true
-          pm2 start server.js --name vescueye-backend-app
+          # Determine PM2 command (fallback to full path if not in PATH)
+          if command -v pm2 &> /dev/null; then
+              PM2_CMD="pm2"
+              echo "✅ PM2 found in PATH"
+          else
+              PM2_CMD="/usr/bin/pm2"
+              echo "⚠️  PM2 not in PATH, using full path: $PM2_CMD"
+          fi
+          
+          # Verify PM2 is working
+          $PM2_CMD --version || {
+              echo "❌ PM2 not found or not working"
+              exit 1
+          }
+          
+          # Gentle restart process (avoid killing PM2 daemon)
+          echo "🔄 Restarting application..."
+          if $PM2_CMD list | grep -q "vescueye-backend-app"; then
+              echo "📋 Found existing vescueye-backend-app, restarting..."
+              $PM2_CMD restart vescueye-backend-app
+          else
+              echo "🔄 Starting new application instance..."
+              # Clean up any old processes with different names
+              $PM2_CMD delete backend 2>/dev/null || true
+              $PM2_CMD delete vescueye-backend-app 2>/dev/null || true
+              
+              # Start the application
+              $PM2_CMD start server.js --name vescueye-backend-app
+          fi
           
           # Save PM2 configuration
-          pm2 save
+          echo "💾 Saving PM2 configuration..."
+          $PM2_CMD save
+          
+          # Setup startup script if not already done
+          if ! systemctl is-enabled pm2-ubuntu >/dev/null 2>&1; then
+              echo "🚀 Setting up PM2 startup script..."
+              sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+          fi
+          
+          # Quick status check
+          echo "📊 Checking status..."
+          $PM2_CMD list vescueye-backend-app
+          
+          # Verify the application is actually running
+          if $PM2_CMD list | grep -q "vescueye-backend-app.*online"; then
+              echo "✅ Deployment completed successfully!"
+              echo "🌐 Application is running on port 5000"
+          else
+              echo "❌ Application failed to start properly"
+              $PM2_CMD logs vescueye-backend-app --lines 10
+              exit 1
+          fi
