@@ -53,6 +53,12 @@ jobs:
               echo "⚠️  PM2 not in PATH, using full path: $PM2_CMD"
           fi
           
+          # Clean up any stuck PM2 processes
+          echo "🧹 Cleaning PM2..."
+          pkill -f pm2 2>/dev/null || true
+          $PM2_CMD kill 2>/dev/null || true
+          sleep 2
+          
           # Verify PM2 is working
           $PM2_CMD --version || {
               echo "❌ PM2 not found or not working"
