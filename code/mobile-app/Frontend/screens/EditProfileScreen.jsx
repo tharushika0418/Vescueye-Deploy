@@ -1,4 +1,3 @@
-import Constants from 'expo-constants'; 
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -27,8 +26,7 @@ const EditProfile = ({ navigation }) => {
     contact: '',
     age: '',
   });
-  const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;    // 2. Get environment variables from app.config.js
-  const API_URL = DEPLOYED_URL||LOCALHOST ;
+
   const [errors, setErrors] = useState({});
 
   // Load user profile on component mount
@@ -44,9 +42,9 @@ const EditProfile = ({ navigation }) => {
         return;
       }
 
-      console.log(`Fetching profile from: ${API_URL}/api/users/doctor/profile`);
+      console.log('Fetching profile from: http://172.20.10.6:5001/api/users/doctor/profile');
       
-      const response = await fetch(`${API_URL}/api/users/doctor/profile`, {
+      const response = await fetch('http://172.20.10.6:5001/api/users/doctor/profile', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -152,10 +150,10 @@ const EditProfile = ({ navigation }) => {
       if (formData.contact.trim()) updateData.contact = formData.contact.trim();
       if (formData.age && formData.age.trim()) updateData.age = parseInt(formData.age);
 
-      console.log(`Updating profile at: ${API_URL}/api/users/doctor/profile`);
+      console.log('Updating profile at: http://172.20.10.6:5001/api/users/doctor/profile');
       console.log('Update data:', updateData);
 
-      const response = await fetch(`${API_URL}/api/users/doctor/profile`, {
+      const response = await fetch('http://172.20.10.6:5001/api/users/doctor/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
