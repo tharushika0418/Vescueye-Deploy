@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';
 import React, { useState, useEffect } from "react";
 import { 
   View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, 
@@ -27,9 +26,7 @@ export default function DoctorDashboard() {
   const [showingFlapData, setShowingFlapData] = useState(false);
 
   const navigation = useNavigation();
-  const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
-  const API_URL = DEPLOYED_URL||LOCALHOST ;
-  
+  const API_URL = "http://172.20.10.6:5001";
   const BASE_URL = `${API_URL}/api/users`;
 
   // Filter patients based on search query
@@ -348,7 +345,7 @@ export default function DoctorDashboard() {
             />
           ) : (
             <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>No flap monitoring data available for this patient.</Text>
+              <Text style={styles.noDataText}>📊 No flap monitoring data available for this patient.</Text>
             </View>
           )}
         </View>
@@ -490,7 +487,7 @@ export default function DoctorDashboard() {
                     style={[styles.primaryButton, { flex: 1 }]} 
                     onPress={() => handleFetchFlapData(item)}
                   >
-                    <Text style={styles.buttonText}>View Flap Data</Text>
+                    <Text style={styles.buttonText}>📊 View Flap Data</Text>
                   </TouchableOpacity>
                 </View>
               </View>

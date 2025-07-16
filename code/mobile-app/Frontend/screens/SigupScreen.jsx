@@ -1,4 +1,3 @@
-import Constants from 'expo-constants'; 
 import React, { useState } from 'react';
 import {
   View,
@@ -42,9 +41,7 @@ export default function SignupScreen({ navigation }) {
     }
 
     try {
-      const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
-      const API_URL = DEPLOYED_URL||LOCALHOST ;
-      const response = await fetch(`${API_URL}/api/auth/signup`, {
+      const response = await fetch('http://172.25.224.1:5000/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ full_name: name, email, password, role }),

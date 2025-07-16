@@ -11,35 +11,30 @@ import {
   Grid,
   CircularProgress,
   TextField,
-  Divider,
-  Alert,
 } from "@mui/material";
-import { Download, Android, QrCode } from "@mui/icons-material";
 import FlapDetailModal from "../components/FlapDetailModal";
-import "../styles/DoctorDashboard.css";
+import "../styles/DoctorDashboard.css"; // Import separate CSS file
 
 const DoctorDashboard = () => {
   const { user } = useContext(AuthContext);
+
+  //   const navigate = useNavigate();
+
   const [assignedPatients, setAssignedPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [flapData, setFlapData] = useState([]);
   const [selectedFlap, setSelectedFlap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredPatients, setFilteredPatients] = useState([]);
-  
   const API_URL = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
   const token = localStorage.getItem("token");
+
   const navigate = useNavigate();
-
-  // APK download URL
-  const APK_DOWNLOAD_URL = "https://expo.dev/accounts/vescueye-testuser/projects/Vescueye/builds/dece2a59-1b77-47f8-b3e0-d1aaf1c12730";
-
-  // Generate QR code URL using a free QR code API
-  const QR_CODE_URL = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(APK_DOWNLOAD_URL)}`;
 
   // Fetch assigned patients when component loads
   useEffect(() => {
@@ -132,107 +127,34 @@ const DoctorDashboard = () => {
     setFilteredPatients(results);
   };
 
-  const handleAPKDownload = () => {
-    window.open(APK_DOWNLOAD_URL, '_blank');
-  };
-
   return (
     <Box className="dashboard-container">
       <Typography variant="h4" sx={{ marginBottom: "20px" }}>
         Doctor Dashboard
       </Typography>
-      
       {/* Doctor Profile Section */}
-      {/* Doctor Profile Section */}
-<Card className="doctor-profile">
-  <CardContent>
-    {user ? (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 4,
-          justifyContent: "space-between",
-        }}
-      >
-        {/* Left Column - Doctor Info */}
-        <Box sx={{ flex: 1 }}>
-          <Typography>
-            <strong>Name:</strong> {user.name}
-          </Typography>
-          <Typography>
-            <strong>Email:</strong> {user.email}
-          </Typography>
-          <Typography>
-            <strong>Role:</strong> {user.role}
-          </Typography>
-        </Box>
-
-        {/* Right Column - APK Download Section */}
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: 2,
-            backgroundColor: "#f8f9fa",
-            borderRadius: 1,
-            flexDirection: { xs: "column", sm: "row" },
-            gap: 2,
-          }}
-        >
-          {/* QR Code & Text */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: 2,
-              flexDirection: { xs: "column", sm: "row" },
-            }}
-          >
-            <img
-              src={QR_CODE_URL}
-              alt="QR Code for APK Download"
-              style={{
-                width: "80px",
-                height: "80px",
-                border: "1px solid #ddd",
-                borderRadius: "4px",
-              }}
-            />
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <QrCode sx={{ color: "#666", fontSize: 20 }} />
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                Scan to Download APK
+      <Card className="doctor-profile">
+        <CardContent>
+          {user ? (
+            <Box>
+              <Typography>
+                <strong>Name:</strong> {user.name}
+              </Typography>
+              <Typography>
+                <strong>Email:</strong> {user.email}
+              </Typography>
+              <Typography>
+                <strong>Role:</strong> {user.role}
               </Typography>
             </Box>
-          </Box>
-
-          {/* Download Button */}
-          <Button
-            variant="contained"
-            startIcon={<Download />}
-            onClick={handleAPKDownload}
-            sx={{
-              backgroundColor: "#4CAF50",
-              "&:hover": {
-                backgroundColor: "#45a049",
-              },
-            }}
-          >
-            Download APK
-          </Button>
-        </Box>
-      </Box>
-    ) : (
-      <Typography>Loading profile...</Typography>
-    )}
-  </CardContent>
-</Card>
-
+          ) : (
+            <Typography>Loading profile...</Typography>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Two Column Layout */}
+
       <Box
         sx={{
           display: "flex",

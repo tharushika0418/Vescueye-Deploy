@@ -1,4 +1,3 @@
-import Constants from 'expo-constants';   // 1. Import Constants to access environment variables
 import React, { useState } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { registerForPushNotificationsAsync } from "../components/NotificationHandler";
@@ -13,11 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 export default function LoginScreen({ navigation, onLoginSuccess, pendingNavigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
-  const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;    // 2. Get environment variables from app.config.js
-  // const API_URL = "http://172.20.10.6:5001";
-  const API_URL = DEPLOYED_URL||LOCALHOST ;
-  // console.log("API URL:", API_URL);
+  const API_URL = "http://172.20.10.6:5001";
 
   const handleLogin = async () => {
     try {
