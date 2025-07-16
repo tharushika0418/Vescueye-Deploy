@@ -210,7 +210,7 @@ const EditProfile = ({ navigation }) => {
         <Text style={styles.inputLabel}>{placeholder}</Text>
         
         <View style={styles.inputWrapper}>
-          <Ionicons name={icon} size={20} color="#666" style={styles.inputIcon} />
+          <Ionicons name={icon} size={20} color="#10e0f8" style={styles.inputIcon} />
           <TextInput
             style={[
               styles.input,
@@ -223,7 +223,7 @@ const EditProfile = ({ navigation }) => {
             keyboardType={keyboardType}
             multiline={multiline}
             editable={editable}
-            placeholderTextColor="#999"
+            placeholderTextColor="#8fb1cc"
             autoCapitalize="sentences"
             autoCorrect={false}
           />
@@ -239,7 +239,7 @@ const EditProfile = ({ navigation }) => {
   if (isLoadingProfile) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007bff" />
+        <ActivityIndicator size="large" color="#10e0f8" />
         <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
@@ -250,11 +250,11 @@ const EditProfile = ({ navigation }) => {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <StatusBar barStyle="dark-content" backgroundColor="#fff" />
+      <StatusBar barStyle="light-content" backgroundColor="#465a6e" />
       
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#333" />
+          <Ionicons name="arrow-back" size={24} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
         <View style={{ width: 24 }} />
@@ -304,18 +304,18 @@ const EditProfile = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#465a6e',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#465a6e',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#666',
+    color: '#10e0f8',
   },
   header: {
     flexDirection: 'row',
@@ -324,14 +324,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#465a6e',
     borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
+    borderBottomColor: '#34495e',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
   },
   content: {
     flex: 1,
@@ -340,22 +340,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   userInfo: {
-    backgroundColor: '#fff',
+    backgroundColor: '#2c3e50',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: '#34495e',
   },
   userInfoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#10e0f8',
     marginBottom: 10,
   },
   userInfoText: {
     fontSize: 14,
-    color: '#666',
+    color: '#a0c9e8',
     marginBottom: 5,
   },
   inputContainer: {
@@ -364,49 +364,49 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#333',
+    color: '#fff',
     marginBottom: 8,
   },
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    borderColor: '#34495e',
+    borderRadius: 12,
+    backgroundColor: '#2c3e50',
     paddingHorizontal: 12,
   },
   input: {
     flex: 1,
     paddingVertical: 12,
     fontSize: 16,
-    color: '#333',
+    color: '#fff',
   },
   multilineInput: {
     minHeight: 80,
     textAlignVertical: 'top',
   },
   inputError: {
-    borderColor: '#dc3545',
+    borderColor: '#ff6b6b',
   },
   inputIcon: {
     marginRight: 10,
   },
   errorText: {
-    color: '#dc3545',
+    color: '#ff6b6b',
     fontSize: 12,
     marginTop: 5,
   },
   footer: {
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#465a6e',
     borderTopWidth: 1,
-    borderTopColor: '#e9ecef',
+    borderTopColor: '#34495e',
   },
   saveButton: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#10e0f8',
     paddingVertical: 15,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

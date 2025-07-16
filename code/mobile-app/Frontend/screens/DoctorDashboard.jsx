@@ -345,7 +345,7 @@ export default function DoctorDashboard() {
             />
           ) : (
             <View style={styles.noDataContainer}>
-              <Text style={styles.noDataText}>📊 No flap monitoring data available for this patient.</Text>
+              <Text style={styles.noDataText}>No flap monitoring data available for this patient.</Text>
             </View>
           )}
         </View>
@@ -487,7 +487,7 @@ export default function DoctorDashboard() {
                     style={[styles.primaryButton, { flex: 1 }]} 
                     onPress={() => handleFetchFlapData(item)}
                   >
-                    <Text style={styles.buttonText}>📊 View Flap Data</Text>
+                    <Text style={styles.buttonText}>View Flap Data</Text>
                   </TouchableOpacity>
                 </View>
               </View>
