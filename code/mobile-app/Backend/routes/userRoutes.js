@@ -1,4 +1,4 @@
-// userRoutes.js - FIXED VERSION
+// userRoutes.js - UPDATED VERSION WITH DOCTOR PROFILE ROUTES
 const express = require("express");
 const { verifyToken } = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/accessControl");
@@ -18,25 +18,39 @@ const {
   getUnassignedPatients,
   assignPatientToDoctor,
   assignAllPatientsToDoctor,
+  getCurrentDoctorProfile,
+  editDoctorProfile,
 } = require("../controller/userController");
 
 const router = express.Router();
 
-// FIXED: Changed from POST to GET for fetching assigned patients
-router.get("/doctors/patients", verifyToken, authorizeRoles("doctor"), getAssignPatients);
+// Doctor profile routes
+router.get('/doctor/profile', verifyToken, authorizeRoles("doctor"), getCurrentDoctorProfile);
+router.put('/doctor/profile', verifyToken, authorizeRoles("doctor"), editDoctorProfile);
 
-// Other routes remain the same
+// Doctor and patient assignment routes
+router.get("/doctors/patients", verifyToken, authorizeRoles("doctor"), getAssignPatients);
 router.post("/assign-patient", verifyToken, authorizeRoles("hospital"), assignPatientToDoctor);
 router.post("/assign-all-patients", verifyToken, authorizeRoles("hospital"), assignAllPatientsToDoctor);
+
+// User management routes
 router.get("/doctors", verifyToken, authorizeRoles("hospital"), getDoctors);
 router.get("/patients", verifyToken, authorizeRoles("hospital"), getPatients);
 router.get("/patients/unassigned", verifyToken, authorizeRoles("hospital"), getUnassignedPatients);
+
+// Search routes
 router.get("/patient/search", verifyToken, authorizeRoles("hospital", "doctor"), searchPatients);
-router.post("/patient/register", verifyToken, authorizeRoles("hospital"), registerPatient);
-router.get("/patient/:id", verifyToken, authorizeRoles("hospital", "doctor"), getPatientById);
 router.get("/doctor/search", verifyToken, authorizeRoles("hospital"), searchDoctors);
+
+// Registration routes
+router.post("/patient/register", verifyToken, authorizeRoles("hospital"), registerPatient);
 router.post("/doctor/register", verifyToken, authorizeRoles("hospital"), registerDoctor);
+
+// Individual user routes
+router.get("/patient/:id", verifyToken, authorizeRoles("hospital", "doctor"), getPatientById);
 router.delete("/:id", verifyToken, authorizeRoles("hospital"), deleteUser);
+
+// Flap-related routes
 router.get("/flap/search/:id", verifyToken, authorizeRoles("doctor", "hospital"), getFlapByPatientId);
 
 // Discharge (delete) a patient by ID
