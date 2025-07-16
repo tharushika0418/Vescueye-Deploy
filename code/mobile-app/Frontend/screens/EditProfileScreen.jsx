@@ -46,6 +46,7 @@ const EditProfile = ({ navigation }) => {
         navigation.navigate('Login');
         return;
       }
+      console.log('API_URL:', API_URL);
 
       console.log('Fetching profile from:', `${API_URL}/api/users/doctor/profile`);
       
