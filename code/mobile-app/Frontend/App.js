@@ -20,6 +20,7 @@ import LiveFlapScreen from './screens/LiveFlapScreen';
 import DoctorDashboard from './screens/DoctorDashboard';
 import ImageViewer from './screens/ImageViewer';
 import ResetPassword from './screens/ResetPassword';
+import EditProfileScreen from './screens/EditProfileScreen';
 import { LogBox } from 'react-native';
 LogBox.ignoreLogs(['Warning: ...']);
 
@@ -103,6 +104,7 @@ export default function App() {
         <Stack.Screen name="Signup" component={SignupScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="Profile" component={ProfileScreen} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
         <Stack.Screen name="ForgotPassword" component={ForgotPassword} />
         <Stack.Screen name="ResetPassword" component={ResetPassword} />
         <Stack.Screen name="LiveFlapScreen" component={LiveFlapScreen} />

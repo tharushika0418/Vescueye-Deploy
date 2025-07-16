@@ -29,7 +29,8 @@ const Signup = () => {
   const navigate = useNavigate();
   const { signup, user } = useContext(AuthContext);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("patient");
+  // const [activeTab, setActiveTab] = useState("patient"); // Commented out - only doctor signup
+  const [activeTab, setActiveTab] = useState("doctor"); // Only doctor signup
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [focusedField, setFocusedField] = useState(null);
@@ -46,17 +47,17 @@ const Signup = () => {
   }, [user, navigate]);
 
   const [formData, setFormData] = useState({
-    patient: {
-      firstName: "",
-      lastName: "",
-      dateOfBirth: "",
-      telephone: "",
-      nic: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-      role: "patient",
-    },
+    // patient: {  // Commented out - patient signup disabled
+    //   firstName: "",
+    //   lastName: "",
+    //   dateOfBirth: "",
+    //   telephone: "",
+    //   nic: "",
+    //   email: "",
+    //   password: "",
+    //   confirmPassword: "",
+    //   role: "patient",
+    // },
     doctor: {
       title: "Mr",
       firstName: "",
@@ -248,11 +249,12 @@ const Signup = () => {
           <div className="logo-container">
             <img src={vescueyeLogo} alt="Vescueye Logo" className="auth-logo" />
           </div>
-          <h2 className="auth-title">Create Account</h2>
+          <h2 className="auth-title">Create Doctor Account</h2>
           <p className="auth-subtitle2">Join us today!</p>
         </div>
 
-        <div className="auth-tabs">
+        {/* Commented out tabs - only doctor signup available */}
+        {/* <div className="auth-tabs">
           {["patient", "doctor"].map((role) => (
             <button
               key={role}
@@ -267,7 +269,7 @@ const Signup = () => {
               {role.charAt(0).toUpperCase() + role.slice(1)}
             </button>
           ))}
-        </div>
+        </div> */}
 
         {error && (
           <div className="error-container">

@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import { 
   View, 
@@ -40,7 +41,9 @@ const ResetPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://172.20.10.6:5001/api/auth/reset-password/${token.trim()}`, {
+      const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
+      const API_URL = DEPLOYED_URL||LOCALHOST ;
+      const response = await fetch(`${API_URL}/api/auth/reset-password/${token.trim()}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword }),

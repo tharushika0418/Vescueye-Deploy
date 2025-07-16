@@ -1,8 +1,11 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native'; // Add this import
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
+const API_URL = DEPLOYED_URL||LOCALHOST ;
 
 export const registerForPushNotificationsAsync = async () => {
   if (!Device.isDevice) {
@@ -56,7 +59,7 @@ export const registerForPushNotificationsAsync = async () => {
 
 const sendPushTokenToBackend = async (token, doctorId) => {
   try {
-    const API_URL = "http://172.20.10.6:5001";
+    // const API_URL = "http://172.20.10.6:5001";
     const userToken = await AsyncStorage.getItem('userToken');
     
     const response = await fetch(`${API_URL}/api/savePushToken`, {
