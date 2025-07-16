@@ -1,43 +1,57 @@
 import React, { useState } from 'react';
 import AsyncStorage from "@react-native-async-storage/async-storage";
- 
+import { registerForPushNotificationsAsync } from "../components/NotificationHandler";
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
   Keyboard, TouchableWithoutFeedback, KeyboardAvoidingView,
-  Platform, Image
+  Image,
+  Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation, onLoginSuccess, pendingNavigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const API_URL = process.env.DEPLOYED_URL || process.env.LOCALHOST ;
-
   const API_URL = "http://172.20.10.6:5001";
 
   const handleLogin = async () => {
-  try {
-    const response = await fetch(`${API_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
+    try {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (response.ok) {
-      // Store the token in AsyncStorage
-      await AsyncStorage.setItem("userToken", data.token);
-      console.log('User logged in:', data);
-      navigation.navigate('Home');
-    } else {
-      Alert.alert('Error', data.message);
+      if (response.ok ) {
+        // Store tokens
+        await AsyncStorage.multiSet([
+          ['userToken', data.token],
+          ['doctorId', data.doctorId?.toString() || '']
+        ]);
+        
+        console.log('User logged in:', data);
+        
+        // Register for push notifications if doctor
+        if (data.user.role === 'doctor') {
+          await registerForPushNotificationsAsync();
+        }
+        
+        // Handle navigation
+        if (onLoginSuccess) {
+          onLoginSuccess();
+        } else {
+          navigation.navigate('Home');
+        }
+      } else {
+        Alert.alert('Error', data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Something went wrong. Please try again later.');
     }
-  } catch (error) {
-    console.error(error);
-    Alert.alert('Error', 'Something went wrong. Please try again later.');
-  }
-};
+  };
   return (
     <KeyboardAvoidingView
       style={styles.container}

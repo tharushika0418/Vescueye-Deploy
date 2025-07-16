@@ -7,15 +7,15 @@ const doctorSchema = new mongoose.Schema(
     age: { type: Number, required: true, min: 0 },
     specialty: { type: String, required: true },
     contact: { type: String, required: true },
+    expoPushToken: { type: String, default: null }, // Add this field
     assignedPatients: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Patient", // Reference to Patient
+        ref: "Patient",
       },
     ],
   },
   { timestamps: true }
 );
 
-const Doctor = mongoose.model("Doctor", doctorSchema);
-module.exports = Doctor;
+module.exports = mongoose.model("Doctor", doctorSchema);

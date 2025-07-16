@@ -24,6 +24,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api', abnormalityRoutes);    // Mount abnormality routes at /api/
 app.use('/api', pushTokenRoutes);      // Mount push token routes at /api/
+// app.use('/api/savePushToken', pushTokenRoutes); // Push token route
 
 // MongoDB connection setup
 mongoose.connect(MONGO_URI, {

@@ -118,6 +118,24 @@ exports.login = async (req, res) => {
       });
     }
 
+    if(user.role !== 'doctor') {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only doctors can log in."
+      });}
+
+    // For doctors, get the doctor profile
+    let doctorProfile = null;
+    if (user.role === 'doctor') {
+      doctorProfile = await Doctor.findOne({ email: user.email });
+      if (!doctorProfile) {
+        return res.status(404).json({
+          success: false,
+          message: "Doctor profile not found"
+        });
+      }
+    }
+
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -129,7 +147,8 @@ exports.login = async (req, res) => {
       { expiresIn: "24h" }
     );
 
-    res.status(200).json({
+    // Prepare response data
+    const responseData = {
       success: true,
       message: "Login successful",
       token,
@@ -139,7 +158,18 @@ exports.login = async (req, res) => {
         email: user.email,
         role: user.role
       }
-    });
+    };
+
+    // Add doctor ID to response if user is a doctor
+    if (user.role === 'doctor') {
+      responseData.doctorId = doctorProfile._id;
+      responseData.doctorInfo = {
+        name: doctorProfile.name,
+        specialty: doctorProfile.specialty
+      };
+    }
+
+    res.status(200).json(responseData);
 
   } catch (error) {
     console.error("Login error:", error);

@@ -26,11 +26,11 @@ LogBox.ignoreLogs(['Warning: ...']);
 const Stack = createStackNavigator();
 
 // Update with your backend base URL (no trailing slash)
-const BASE_URL = 'http://172.20.10.3:5001/api';
+const BASE_URL = 'http://172.20.10.6:5001/api';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowAlert: true,  //shouldShowBanner
     shouldPlaySound: false,
     shouldSetBadge: false,
   }),
@@ -40,8 +40,6 @@ export default function App() {
   const [pendingNavigation, setPendingNavigation] = useState(null);
 
   useEffect(() => {
-    // Register for push notifications on app start
-    registerForPushNotificationsAsync();
 
     // Listen for notification responses (user taps on notification)
     const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
@@ -117,61 +115,3 @@ export default function App() {
   );
 }
 
-// Register device for push notifications and send token to backend
-async function registerForPushNotificationsAsync() {
-  if (!Device.isDevice) {
-    console.log('❌ Must use physical device for push notifications');
-    return;
-  }
-
-  const { status: existingStatus } = await Notifications.getPermissionsAsync();
-  let finalStatus = existingStatus;
-
-  if (existingStatus !== 'granted') {
-    const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
-
-  if (finalStatus !== 'granted') {
-    console.log('❌ Notification permission not granted');
-    return;
-  }
-
-  try {
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    const expoPushToken = tokenData.data;
-    console.log('✅ Expo Push Token:', expoPushToken);
-    await sendPushTokenToBackend(expoPushToken);
-  } catch (err) {
-    console.log('❌ Error getting Expo Push Token:', err);
-  }
-
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-    });
-  }
-}
-
-// Send Expo push token to backend server to save
-async function sendPushTokenToBackend(expoPushToken) {
-  try {
-    const response = await fetch(`${BASE_URL}/savePushToken`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ token: expoPushToken }),
-    });
-
-    if (response.ok) {
-      console.log('✅ Push token sent successfully');
-    } else {
-      const errorText = await response.text();
-      console.log('❌ Failed to send push token:', errorText);
-    }
-  } catch (err) {
-    console.log('❌ Error sending push token to backend:', err);
-  }
-}
