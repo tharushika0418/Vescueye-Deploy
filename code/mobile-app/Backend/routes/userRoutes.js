@@ -1,4 +1,4 @@
-// userRoutes.js - FIXED ROUTE ORDER
+// userRoutes.js - IMPROVED VERSION WITH DEBUG LOGGING
 const express = require("express");
 const { verifyToken } = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/accessControl");
@@ -31,35 +31,80 @@ router.use((req, res, next) => {
   next();
 });
 
-// ===================================
-// SPECIFIC ROUTES FIRST (CRITICAL!)
-// ===================================
+// DOCTOR ROUTES (more specific routes first)
+// Get current doctor profile - WITH DEBUG LOGGING
+router.get('/doctor/profile', 
+  (req, res, next) => {
+    console.log('=== DOCTOR PROFILE GET ROUTE HIT ===');
+    console.log('Method:', req.method);
+    console.log('Path:', req.path);
+    console.log('Original URL:', req.originalUrl);
+    console.log('Query params:', req.query);
+    console.log('Auth header:', req.headers.authorization ? 'Present' : 'Missing');
+    next();
+  },
+  verifyToken, 
+  (req, res, next) => {
+    console.log('=== AFTER verifyToken MIDDLEWARE ===');
+    console.log('User from token:', req.user);
+    next();
+  },
+  authorizeRoles("doctor"), 
+  (req, res, next) => {
+    console.log('=== AFTER authorizeRoles MIDDLEWARE ===');
+    console.log('About to call getCurrentDoctorProfile');
+    next();
+  },
+  getCurrentDoctorProfile
+);
 
-// DOCTOR SPECIFIC ROUTES - MUST BE BEFORE GENERIC ROUTES
-router.get('/doctor/profile', verifyToken, authorizeRoles("doctor"), getCurrentDoctorProfile);
-router.put('/doctor/profile', verifyToken, authorizeRoles("doctor"), editDoctorProfile);
+// Edit doctor profile - WITH DEBUG LOGGING
+router.put('/doctor/profile', 
+  (req, res, next) => {
+    console.log('=== DOCTOR PROFILE PUT ROUTE HIT ===');
+    console.log('Method:', req.method);
+    console.log('Path:', req.path);
+    console.log('Original URL:', req.originalUrl);
+    console.log('Body:', req.body);
+    console.log('Auth header:', req.headers.authorization ? 'Present' : 'Missing');
+    next();
+  },
+  verifyToken, 
+  (req, res, next) => {
+    console.log('=== AFTER verifyToken MIDDLEWARE (PUT) ===');
+    console.log('User from token:', req.user);
+    next();
+  },
+  authorizeRoles("doctor"), 
+  (req, res, next) => {
+    console.log('=== AFTER authorizeRoles MIDDLEWARE (PUT) ===');
+    console.log('About to call editDoctorProfile');
+    next();
+  },
+  editDoctorProfile
+);
+
+// Get assigned patients for current doctor
 router.get("/doctor/patients", verifyToken, authorizeRoles("doctor"), getAssignPatients);
+
+// Search doctors (hospital only)
 router.get("/doctor/search", verifyToken, authorizeRoles("hospital"), searchDoctors);
+
+// Register new doctor (hospital only)
 router.post("/doctor/register", verifyToken, authorizeRoles("hospital"), registerDoctor);
-
-// PATIENT SPECIFIC ROUTES
-router.get("/patient/search", verifyToken, authorizeRoles("hospital", "doctor"), searchPatients);
-router.post("/patient/register", verifyToken, authorizeRoles("hospital"), registerPatient);
-router.get("/patients/unassigned", verifyToken, authorizeRoles("hospital"), getUnassignedPatients);
-
-// ASSIGNMENT ROUTES
-router.post("/assign-patient", verifyToken, authorizeRoles("hospital"), assignPatientToDoctor);
-router.post("/assign-all-patients", verifyToken, authorizeRoles("hospital"), assignAllPatientsToDoctor);
-
-// FLAP ROUTES
-router.get("/flap/search/:id", verifyToken, authorizeRoles("doctor", "hospital"), getFlapByPatientId);
-
-// ===================================
-// GENERIC ROUTES LAST (IMPORTANT!)
-// ===================================
 
 // Get all doctors (hospital only)
 router.get("/doctors", verifyToken, authorizeRoles("hospital"), getDoctors);
+
+// PATIENT ROUTES
+// Search patients
+router.get("/patient/search", verifyToken, authorizeRoles("hospital", "doctor"), searchPatients);
+
+// Register new patient (hospital only)
+router.post("/patient/register", verifyToken, authorizeRoles("hospital"), registerPatient);
+
+// Get unassigned patients (hospital only)
+router.get("/patients/unassigned", verifyToken, authorizeRoles("hospital"), getUnassignedPatients);
 
 // Get all patients (hospital only)
 router.get("/patients", verifyToken, authorizeRoles("hospital"), getPatients);
@@ -78,13 +123,25 @@ router.delete("/patients/:id", verifyToken, authorizeRoles("hospital"), async (r
   }
 });
 
-// Get patient by ID - MOVED TO END
+// Get patient by ID
 router.get("/patient/:id", verifyToken, authorizeRoles("hospital", "doctor"), getPatientById);
 
-// Delete user by ID (hospital only) - MOVED TO END
+// ASSIGNMENT ROUTES
+// Assign patient to doctor (hospital only)
+router.post("/assign-patient", verifyToken, authorizeRoles("hospital"), assignPatientToDoctor);
+
+// Assign all patients to doctor (hospital only)
+router.post("/assign-all-patients", verifyToken, authorizeRoles("hospital"), assignAllPatientsToDoctor);
+
+// FLAP ROUTES
+// Get flap by patient ID
+router.get("/flap/search/:id", verifyToken, authorizeRoles("doctor", "hospital"), getFlapByPatientId);
+
+// GENERIC USER ROUTES (most specific routes last)
+// Delete user by ID (hospital only) - made more specific
 router.delete("/user/:id", verifyToken, authorizeRoles("hospital"), deleteUser);
 
-// Catch any unmatched routes
+// Add this at the end to catch any unmatched routes
 router.use((req, res) => {
   console.log('=== UNMATCHED ROUTE ===');
   console.log('Method:', req.method);
