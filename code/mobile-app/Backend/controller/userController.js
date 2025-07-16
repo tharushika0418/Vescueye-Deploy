@@ -543,16 +543,78 @@ exports.assignAllPatientsToDoctor = async (req, res) => {
   }
 };
 
+// Add this debug logging to your controller functions
+
+// Get current doctor profile
+exports.getCurrentDoctorProfile = async (req, res) => {
+  console.log('=== getCurrentDoctorProfile CONTROLLER CALLED ===');
+  console.log('Request user:', req.user);
+  
+  try {
+    // Get the logged-in user's info from JWT token
+    const { email, role } = req.user;
+    console.log('Extracted email:', email, 'role:', role);
+    
+    // Verify this is a doctor
+    if (role !== 'doctor') {
+      console.log('Role verification failed - not a doctor');
+      return res.status(403).json({ 
+        success: false,
+        message: "Access denied. Only doctors can view their profile." 
+      });
+    }
+
+    console.log('Looking for doctor with email:', email);
+    // Find the doctor by email
+    const doctor = await Doctor.findOne({ email });
+    
+    if (!doctor) {
+      console.log('Doctor not found in database');
+      return res.status(404).json({ 
+        success: false,
+        message: "Doctor profile not found" 
+      });
+    }
+
+    console.log('Doctor found:', doctor);
+    res.status(200).json({
+      success: true,
+      doctor: {
+        id: doctor._id,
+        name: doctor.name,
+        email: doctor.email,
+        specialty: doctor.specialty,
+        contact: doctor.contact,
+        age: doctor.age
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching doctor profile:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Error fetching doctor profile", 
+      error: error.message 
+    });
+  }
+};
+
 // Edit doctor profile
 exports.editDoctorProfile = async (req, res) => {
+  console.log('=== editDoctorProfile CONTROLLER CALLED ===');
+  console.log('Request user:', req.user);
+  console.log('Request body:', req.body);
+  
   try {
     const { name, specialty, contact, age } = req.body;
     
     // Get the logged-in user's info from JWT token (set by verifyToken middleware)
     const { email, role } = req.user;
+    console.log('Extracted email:', email, 'role:', role);
     
     // Verify this is a doctor
     if (role !== 'doctor') {
+      console.log('Role verification failed - not a doctor');
       return res.status(403).json({ 
         success: false,
         message: "Access denied. Only doctors can edit their profile." 
@@ -561,22 +623,26 @@ exports.editDoctorProfile = async (req, res) => {
 
     // Validate contact number if provided (must be 10 digits)
     if (contact && !/^\d{10}$/.test(contact)) {
+      console.log('Contact validation failed');
       return res.status(400).json({ 
         success: false,
         message: "Contact number must be exactly 10 digits" 
       });
     }
 
+    console.log('Looking for doctor with email:', email);
     // Find the doctor by email
     const doctor = await Doctor.findOne({ email });
     
     if (!doctor) {
+      console.log('Doctor not found in database');
       return res.status(404).json({ 
         success: false,
         message: "Doctor profile not found" 
       });
     }
 
+    console.log('Doctor found, updating profile...');
     // Update only the fields that are provided
     const updateData = {};
     if (name !== undefined) updateData.name = name;
@@ -584,12 +650,16 @@ exports.editDoctorProfile = async (req, res) => {
     if (contact !== undefined) updateData.contact = contact;
     if (age !== undefined) updateData.age = age;
 
+    console.log('Update data:', updateData);
+
     // Update the doctor profile
     const updatedDoctor = await Doctor.findByIdAndUpdate(
       doctor._id,
       updateData,
       { new: true, runValidators: true }
     );
+
+    console.log('Doctor updated successfully:', updatedDoctor);
 
     res.status(200).json({
       success: true,
@@ -609,52 +679,6 @@ exports.editDoctorProfile = async (req, res) => {
     res.status(500).json({ 
       success: false,
       message: "Error updating doctor profile", 
-      error: error.message 
-    });
-  }
-};
-
-// Get current doctor profile
-exports.getCurrentDoctorProfile = async (req, res) => {
-  try {
-    // Get the logged-in user's info from JWT token
-    const { email, role } = req.user;
-    
-    // Verify this is a doctor
-    if (role !== 'doctor') {
-      return res.status(403).json({ 
-        success: false,
-        message: "Access denied. Only doctors can view their profile." 
-      });
-    }
-
-    // Find the doctor by email
-    const doctor = await Doctor.findOne({ email });
-    
-    if (!doctor) {
-      return res.status(404).json({ 
-        success: false,
-        message: "Doctor profile not found" 
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      doctor: {
-        id: doctor._id,
-        name: doctor.name,
-        email: doctor.email,
-        specialty: doctor.specialty,
-        contact: doctor.contact,
-        age: doctor.age
-      }
-    });
-
-  } catch (error) {
-    console.error("Error fetching doctor profile:", error);
-    res.status(500).json({ 
-      success: false,
-      message: "Error fetching doctor profile", 
       error: error.message 
     });
   }
