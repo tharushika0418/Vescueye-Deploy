@@ -1,4 +1,4 @@
-// userRoutes.js - IMPROVED VERSION WITH DEBUG LOGGING
+// userRoutes.js - IMPROVED VERSION
 const express = require("express");
 const { verifyToken } = require("../middleware/authMiddleware");
 const authorizeRoles = require("../middleware/accessControl");
@@ -24,65 +24,12 @@ const {
 
 const router = express.Router();
 
-// Add general request logging for all routes
-router.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-  console.log('Headers:', req.headers.authorization ? 'Auth header present' : 'No auth header');
-  next();
-});
-
 // DOCTOR ROUTES (more specific routes first)
-// Get current doctor profile - WITH DEBUG LOGGING
-router.get('/doctor/profile', 
-  (req, res, next) => {
-    console.log('=== DOCTOR PROFILE GET ROUTE HIT ===');
-    console.log('Method:', req.method);
-    console.log('Path:', req.path);
-    console.log('Original URL:', req.originalUrl);
-    console.log('Query params:', req.query);
-    console.log('Auth header:', req.headers.authorization ? 'Present' : 'Missing');
-    next();
-  },
-  verifyToken, 
-  (req, res, next) => {
-    console.log('=== AFTER verifyToken MIDDLEWARE ===');
-    console.log('User from token:', req.user);
-    next();
-  },
-  authorizeRoles("doctor"), 
-  (req, res, next) => {
-    console.log('=== AFTER authorizeRoles MIDDLEWARE ===');
-    console.log('About to call getCurrentDoctorProfile');
-    next();
-  },
-  getCurrentDoctorProfile
-);
+// Get current doctor profile
+router.get('/doctor/profile', verifyToken, authorizeRoles("doctor"), getCurrentDoctorProfile);
 
-// Edit doctor profile - WITH DEBUG LOGGING
-router.put('/doctor/profile', 
-  (req, res, next) => {
-    console.log('=== DOCTOR PROFILE PUT ROUTE HIT ===');
-    console.log('Method:', req.method);
-    console.log('Path:', req.path);
-    console.log('Original URL:', req.originalUrl);
-    console.log('Body:', req.body);
-    console.log('Auth header:', req.headers.authorization ? 'Present' : 'Missing');
-    next();
-  },
-  verifyToken, 
-  (req, res, next) => {
-    console.log('=== AFTER verifyToken MIDDLEWARE (PUT) ===');
-    console.log('User from token:', req.user);
-    next();
-  },
-  authorizeRoles("doctor"), 
-  (req, res, next) => {
-    console.log('=== AFTER authorizeRoles MIDDLEWARE (PUT) ===');
-    console.log('About to call editDoctorProfile');
-    next();
-  },
-  editDoctorProfile
-);
+// Edit doctor profile
+router.put('/doctor/profile', verifyToken, authorizeRoles("doctor"), editDoctorProfile);
 
 // Get assigned patients for current doctor
 router.get("/doctor/patients", verifyToken, authorizeRoles("doctor"), getAssignPatients);
@@ -140,18 +87,5 @@ router.get("/flap/search/:id", verifyToken, authorizeRoles("doctor", "hospital")
 // GENERIC USER ROUTES (most specific routes last)
 // Delete user by ID (hospital only) - made more specific
 router.delete("/user/:id", verifyToken, authorizeRoles("hospital"), deleteUser);
-
-// Add this at the end to catch any unmatched routes
-router.use((req, res) => {
-  console.log('=== UNMATCHED ROUTE ===');
-  console.log('Method:', req.method);
-  console.log('Path:', req.path);
-  console.log('Original URL:', req.originalUrl);
-  res.status(404).json({ 
-    error: 'Route not found',
-    method: req.method,
-    path: req.path 
-  });
-});
 
 module.exports = router;
