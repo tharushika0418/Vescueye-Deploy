@@ -8,7 +8,7 @@ const WelcomeScreen = ({ navigation }) => {
         <View style={styles.container}>
             {/* Background Image with Loading Spinner */}
             <Image
-                source={require('../assets/background.webp')} // ✅ Use local image
+                source={require('../assets/background.jpg')} // ✅ Use local image
                 style={styles.backgroundImage}
                 onLoadEnd={() => setLoading(false)}
             />
