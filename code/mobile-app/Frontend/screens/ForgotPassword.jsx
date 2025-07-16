@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import React, { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Alert,
@@ -9,7 +10,9 @@ import { Ionicons } from '@expo/vector-icons';
 const ForgotPassword = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-
+  const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;    // 2. Get environment variables from app.config.js
+  // const API_URL = "http://172.20.10.6:5001";
+  const API_URL = DEPLOYED_URL||LOCALHOST ;
   const handleResetPassword = async () => {
     if (!email) {
       Alert.alert("Error", "Please enter your email address.");
@@ -18,7 +21,7 @@ const ForgotPassword = ({ navigation }) => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://172.20.10.6:5001/api/auth/forgot-password', {
+      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

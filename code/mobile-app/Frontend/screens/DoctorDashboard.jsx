@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import React, { useState, useEffect } from "react";
 import { 
   View, Text, FlatList, TouchableOpacity, ActivityIndicator, StyleSheet, 
@@ -26,7 +27,9 @@ export default function DoctorDashboard() {
   const [showingFlapData, setShowingFlapData] = useState(false);
 
   const navigation = useNavigation();
-  const API_URL = "http://172.20.10.6:5001";
+  const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
+  const API_URL = DEPLOYED_URL||LOCALHOST ;
+  
   const BASE_URL = `${API_URL}/api/users`;
 
   // Filter patients based on search query

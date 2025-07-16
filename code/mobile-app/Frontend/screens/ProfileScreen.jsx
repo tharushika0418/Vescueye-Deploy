@@ -1,3 +1,4 @@
+import Constants from 'expo-constants'; 
 import React, { useEffect, useState, useContext } from "react";
 import { 
   View, 
@@ -14,8 +15,9 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // Adjust the import path based on your project structure
 // import { AuthContext } from "../contexts/AuthContext"; // Uncomment and adjust path as needed
-
-const API_BASE_URL = "http://172.20.10.6:5001/api/users"; // Your backend URL
+const { LOCALHOST, DEPLOYED_URL } = Constants.expoConfig.extra;
+const API_URL = DEPLOYED_URL||LOCALHOST ;
+const API_BASE_URL = `${API_URL}/api/users`; 
 
 export default function DoctorProfile({ navigation }) {
   const [patients, setPatients] = useState([]);
